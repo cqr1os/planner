@@ -22,6 +22,7 @@
   --muted: #6a7080;
   --line: #e3e6ec;
   --ring: #b6bbc7;
+  --hover: #f6f7f9;
   --hi: #4dabf7;
   --hi-ink: #0b2338;
   --today: #228be6;
@@ -48,6 +49,7 @@
     --muted: #959cab;
     --line: #2b2f3a;
     --ring: #4c5260;
+    --hover: #232733;
     --hi: #4dabf7;
     --hi-ink: #061727;
     --today: #4dabf7;
@@ -313,6 +315,49 @@ main {
 .key-msg.bad { color: var(--danger); }
 .panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Mac and other big screens: days side by side, today on the left */
+@media (min-width: 640px) {
+  .page { max-width: 1680px; }
+  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .day-head { flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px 10px; }
+  .day-name { font-size: 19px; }
+  .count { font-size: 13px; }
+  .row { gap: 10px; padding: 10px 14px; }
+  .add { padding: 0 14px 0 2px; }
+
+  .sheet-wrap { justify-content: center; padding: 24px; }
+  .sheet {
+    max-width: 440px;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(10, 12, 20, 0.28);
+    animation: sheet-pop 0.14s ease-out;
+  }
+}
+@media (min-width: 960px) {
+  main { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  main { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .day { min-height: 260px; }
+  .day-head { padding: 12px 12px 10px; }
+  .row { padding: 10px 12px; font-size: 15px; }
+  .mark { width: 20px; height: 20px; }
+  .add { padding: 0 12px 0 0; }
+  .add input { font-size: 16px; }
+}
+@keyframes sheet-pop { from { transform: scale(0.97); opacity: 0; } }
+
+/* mouse and trackpad */
+@media (hover: hover) and (pointer: fine) {
+  .row:hover { background: var(--hover); }
+  .row.pressing { background: var(--line); }
+  .plus:hover { color: var(--today); }
+  .dbtn:not(:disabled):hover { border-color: var(--today); }
+  .pbtn:not(:disabled):hover { border-color: var(--ring); }
+  .pbtn-main:not(:disabled):hover { border-color: var(--hi); filter: brightness(1.06); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
   .sheet { animation: none; }
@@ -321,21 +366,21 @@ main {
 </head>
 <body>
 <header class="top">
-  <div class="inner banner" id="safari-banner" role="alert" hidden>
+  <div class="inner page banner" id="safari-banner" role="alert" hidden>
     <strong>You're in Safari, not the app.</strong>
-    Plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon.
+    <span id="banner-text"></span>
   </div>
-  <div class="inner title">
+  <div class="inner page title">
     <h1>This week</h1>
     <span class="range" id="range"></span>
   </div>
 </header>
 
-<main class="inner" id="week"></main>
+<main class="inner page" id="week"></main>
 
-<p class="inner hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
+<p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
 
-<div class="inner foot">
+<div class="inner page foot">
   <button class="backup-link" id="backup" type="button">Turn on backup</button>
 </div>
 
@@ -648,7 +693,13 @@ main {
     row.addEventListener("pointerup", () => { if (timer) cancel(); });
     row.addEventListener("pointercancel", cancel);
     row.addEventListener("pointerleave", cancel);
-    row.addEventListener("contextmenu", (e) => e.preventDefault());
+    // right-click (or two-finger click) opens the same menu as holding
+    row.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      cancel();
+      long = true; // swallow the click a ctrl-click may send after this
+      if (sheetId !== item.id) openSheet(item.id, true);
+    });
     row.addEventListener("click", () => {
       if (long) { long = false; return; }
       toggle(item.id);
@@ -1103,10 +1154,21 @@ main {
 
   // ---------- boot ----------
 
-  // Safari and the home-screen app keep separate plans on iPhone, so say so when this isn't the app
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  // Safari and the installed app keep separate plans (iPhone home screen and Mac Dock alike),
+  // so say so when this isn't the app
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isMacSafari = /Macintosh/.test(ua) && navigator.maxTouchPoints <= 1 && /Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
   const isApp = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
-  document.getElementById("safari-banner").hidden = !(isIOS && !isApp);
+  const bannerText = isIOS
+    ? "Plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon."
+    : "Plans you add here are kept separate from your Planner app. To make it an app, choose File, then Add to Dock, and open it from the blue icon in your Dock.";
+  document.getElementById("banner-text").textContent = bannerText;
+  document.getElementById("safari-banner").hidden = isApp || !(isIOS || isMacSafari);
+
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    document.getElementById("hint").textContent = "Click a task to cross it off. Right-click it to move it or delete it.";
+  }
 
   // at midnight the week shifts by a day and leftovers roll onto the new today
   let midnightTimer = null;
