@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planner</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f3f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#13151b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+/* Seven day cards, today first. System fonts so it opens instantly and feels native on iPhone. */
+:root {
+  --bg: #f2f3f6;
+  --surface: #ffffff;
+  --ink: #1a1d26;
+  --muted: #6a7080;
+  --line: #e3e6ec;
+  --ring: #b6bbc7;
+  --hi: #4dabf7;
+  --hi-ink: #0b2338;
+  --today: #228be6;
+  --tag-bg: #e3f0fd;
+  --tag-ink: #1864ab;
+  --ok: #23824f;
+  --danger: #d63b3b;
+  --danger-ink: #ffffff;
+  --focus: #3b5bdb;
+  --toast-action: #74c0fc;
+  --scrim: rgba(10, 12, 20, 0.38);
+  --warn-bg: #fff4d6;
+  --warn-ink: #5a4300;
+  --warn-line: #f0d27a;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #13151b;
+    --surface: #1d2029;
+    --ink: #eceef3;
+    --muted: #959cab;
+    --line: #2b2f3a;
+    --ring: #4c5260;
+    --hi: #4dabf7;
+    --hi-ink: #061727;
+    --today: #4dabf7;
+    --tag-bg: #16304a;
+    --tag-ink: #a5d8ff;
+    --ok: #5cc98b;
+    --danger: #ff6b6b;
+    --danger-ink: #2a0606;
+    --focus: #8ea2ff;
+    --toast-action: #1864ab;
+    --scrim: rgba(0, 0, 0, 0.55);
+    --warn-bg: #2a2410;
+    --warn-ink: #f5dc8a;
+    --warn-line: #4a3e14;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.4;
+}
+body { min-height: 100dvh; padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+body.locked { overflow: hidden; }
+button { font: inherit; color: inherit; }
+button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+.top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.inner { max-width: 640px; margin: 0 auto; }
+
+.banner {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--warn-line);
+  border-radius: 14px;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: 15px;
+  line-height: 1.35;
+}
+.banner strong { display: block; margin-bottom: 2px; }
+
+.title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; padding: 0 4px; }
+.title h1 { margin: 0; font-family: var(--font-round); font-size: 30px; letter-spacing: -0.015em; line-height: 1.15; }
+.range { color: var(--muted); font-size: 15px; }
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.day { background: var(--surface); border-radius: 18px; overflow: hidden; }
+.day.today { box-shadow: 0 0 0 2px var(--today); }
+.day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 13px 16px 11px; }
+.day-title { margin: 0; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; font-size: inherit; font-weight: 400; }
+.day-name { font-family: var(--font-round); font-weight: 700; font-size: 21px; letter-spacing: -0.01em; }
+.today .day-name { color: var(--today); }
+.day-date { color: var(--muted); font-size: 15px; }
+.count { flex: none; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.count.all { color: var(--ok); font-weight: 600; }
+
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks li { border-top: 1px solid var(--line); }
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition: background-color 0.2s ease;
+}
+.row.pressing { background: var(--line); }
+.mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--ring);
+  display: grid;
+  place-items: center;
+  color: transparent;
+}
+.mark svg { width: 12px; height: 12px; }
+.row.done .mark { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.text { max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
+.row.done .text { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.tag { font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--tag-ink); background: var(--tag-bg); border-radius: 6px; padding: 0 7px; }
+.row.done .tag { opacity: 0.6; }
+
+.add { display: flex; align-items: center; gap: 1px; padding: 0 16px 0 5px; border-top: 1px solid var(--line); }
+.plus {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ring);
+  display: grid;
+  place-items: center;
+}
+.plus svg { width: 18px; height: 18px; }
+.add:focus-within .plus { color: var(--today); }
+.add input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  padding: 12px 0;
+}
+.add input::placeholder { color: var(--muted); }
+
+.hint { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 16px 0; margin: 0; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 14px;
+  padding: 10px 10px 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  z-index: 30;
+  box-shadow: 0 8px 28px rgba(10, 12, 20, 0.22);
+}
+.toast span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast button { flex: none; background: transparent; border: 0; color: var(--toast-action); font-weight: 700; padding: 6px 8px; }
+
+/* hold a task: move it or delete it */
+.sheet-wrap { position: fixed; inset: 0; z-index: 15; display: flex; flex-direction: column; justify-content: flex-end; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -1px 0 var(--line);
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: sheet-up 0.18s ease-out;
+}
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
+.sheet-task {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sheet-label { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.sheet-days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.dbtn {
+  height: 58px;
+  padding: 0 4px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.dbtn-name { font-weight: 600; font-size: 15px; }
+.dbtn-date { color: var(--muted); font-size: 12px; }
+.dbtn:disabled { border-color: var(--today); background: transparent; }
+.dbtn:disabled .dbtn-date { color: var(--today); font-weight: 600; }
+.sheet-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+.pbtn {
+  height: 46px;
+  padding: 0 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+.sheet-actions .pbtn { flex: 1; height: 50px; }
+.pbtn-main { background: var(--hi); border-color: var(--hi); color: var(--hi-ink); }
+.pbtn-danger { color: var(--danger); }
+.pbtn:disabled { opacity: 0.5; }
+
+.foot { text-align: center; padding: 4px 16px 0; }
+.backup-link {
+  background: none;
+  border: 0;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: var(--ring);
+  text-underline-offset: 3px;
+}
+.backup-link.warn { color: var(--danger); font-weight: 600; }
+
+.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow-y: auto;
+  background: var(--bg);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.panel-inner, .panel-view, .key-form { display: flex; flex-direction: column; gap: 14px; }
+.panel-title { margin: 0; font-family: var(--font-round); font-size: 26px; letter-spacing: -0.01em; }
+.panel-p { margin: 0; color: var(--muted); }
+.steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
+.steps a { color: var(--focus); font-weight: 600; }
+#key-input {
+  height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+}
+#key-input:focus { outline: 0; border-color: var(--focus); }
+.key-msg { margin: 0; min-height: 1.3em; color: var(--muted); font-size: 15px; }
+.key-msg.bad { color: var(--danger); }
+.panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .row { transition: none; }
+  .sheet { animation: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="inner banner" id="safari-banner" role="alert" hidden>
+    <strong>You're in Safari, not the app.</strong>
+    Plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon.
+  </div>
+  <div class="inner title">
+    <h1>This week</h1>
+    <span class="range" id="range"></span>
+  </div>
+</header>
+
+<main class="inner" id="week"></main>
+
+<p class="inner hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
+
+<div class="inner foot">
+  <button class="backup-link" id="backup" type="button">Turn on backup</button>
+</div>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-task">
+    <p class="sheet-task" id="sheet-task"></p>
+    <p class="sheet-label">Move to</p>
+    <div class="sheet-days" id="sheet-days"></div>
+    <div class="sheet-actions">
+      <button class="pbtn pbtn-danger" id="sheet-delete" type="button">Delete</button>
+      <button class="pbtn" id="sheet-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<section class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
+  <div class="inner panel-inner">
+    <h2 class="panel-title" id="panel-title">Back up your planner</h2>
+
+    <div class="panel-view" id="panel-setup">
+      <p class="panel-p">Your plans get copied to your private brain-dump-notes repo on GitHub, the same place Brain Dump backs up, in a file called planner.json. Only you can see it. If you still have the key you made for Brain Dump, paste that below. If not, make a new one:</p>
+      <ol class="steps">
+        <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+backup&amp;description=Lets+the+Planner+app+back+up+plans&amp;target_name=cqr1os&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
+        <li>Under <b>Repository access</b>, pick <b>Only select repositories</b> and choose <b>brain-dump-notes</b>.</li>
+        <li>Under <b>Permissions</b>, set <b>Contents</b> to <b>Read and write</b>.</li>
+        <li>Set <b>Expiration</b> to <b>No expiration</b> if it's there, otherwise the longest one. Tap <b>Generate token</b> and copy it.</li>
+      </ol>
+      <form class="key-form" id="key-form" autocomplete="off">
+        <input id="key-input" type="text" placeholder="Paste your key here" aria-label="GitHub key"
+               autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+        <p class="key-msg" id="key-msg" role="status"></p>
+        <div class="panel-actions">
+          <button class="pbtn pbtn-main" id="key-save" type="submit">Save</button>
+          <button class="pbtn" type="button" data-close>Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel-view" id="panel-on" hidden>
+      <p class="panel-p" id="panel-status"></p>
+      <div class="panel-actions">
+        <button class="pbtn pbtn-main" id="backup-now" type="button">Back up now</button>
+        <button class="pbtn" id="change-key" type="button">Change key</button>
+        <button class="pbtn pbtn-danger" id="backup-off" type="button">Turn off backup</button>
+        <button class="pbtn" type="button" data-close>Close</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  const KEY = "planner-v1";
+  const DAY = 864e5;
+  const CHECK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3l2.3 2.2L9.6 3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const PLUS_SVG = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+
+  const weekEl = document.getElementById("week");
+  const rangeEl = document.getElementById("range");
+  const toastEl = document.getElementById("toast");
+
+  // ---------- storage ----------
+  // Every change is written to two places on the phone (localStorage and IndexedDB).
+  // Loading only ever merges what it finds into what's on screen, so a store that
+  // comes back empty can never wipe plans. Deletes are kept as markers so they stick.
+  // Each task: {id, text, day: "YYYY-MM-DD", at, updated, done, from?, deleted?}
+
+  const valid = (i) => i && typeof i.id === "string" && typeof i.text === "string" && typeof i.at === "number" && typeof i.day === "string";
+  const stamp = (i) => i.updated || i.at;
+
+  function mergeLists(...lists) {
+    const byId = new Map();
+    for (const list of lists) {
+      if (!Array.isArray(list)) continue;
+      for (const it of list) {
+        if (!valid(it)) continue;
+        const prev = byId.get(it.id);
+        if (!prev || stamp(it) >= stamp(prev)) byId.set(it.id, it);
+      }
+    }
+    return [...byId.values()];
+  }
+
+  function readLocal() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(v) ? v : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeLocal(list) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  let idbPromise = null;
+  function openIdb() {
+    if (!idbPromise) {
+      idbPromise = new Promise((resolve) => {
+        try {
+          const req = indexedDB.open("planner", 1);
+          req.onupgradeneeded = () => req.result.createObjectStore("kv");
+          req.onsuccess = () => {
+            const db = req.result;
+            db.onclose = () => { idbPromise = null; };
+            resolve(db);
+          };
+          req.onerror = () => resolve(null);
+          req.onblocked = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+    return idbPromise;
+  }
+
+  // iPhone sometimes drops the database connection while the app sits in the background,
+  // so a failed transaction gets one more try on a fresh connection.
+  async function idbRun(mode, fn) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const db = await openIdb();
+      if (!db) return null;
+      try {
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction("kv", mode);
+          const req = fn(tx.objectStore("kv"));
+          tx.oncomplete = () => resolve(req.result);
+          tx.onerror = tx.onabort = () => reject(tx.error);
+        });
+      } catch (e) {
+        idbPromise = null;
+      }
+    }
+    return null;
+  }
+
+  async function readIdb() {
+    const v = await idbRun("readonly", (s) => s.get(KEY));
+    return Array.isArray(v) ? v : [];
+  }
+
+  async function writeIdb(list) {
+    return (await idbRun("readwrite", (s) => s.put(list, KEY))) !== null;
+  }
+
+  let items = mergeLists(readLocal());
+  let writeChain = Promise.resolve();
+
+  // what's on screen wins ties, but anything another window saved meanwhile is kept
+  const withStored = () => mergeLists(readLocal(), items);
+
+  const sig = (list) => JSON.stringify(list.map((i) => i.id + ":" + stamp(i)).sort());
+
+  function save() {
+    persistLocal();
+    scheduleBackup();
+  }
+
+  function persistLocal() {
+    items = withStored();
+    const snapshot = items.slice();
+    const okLocal = writeLocal(snapshot);
+    writeChain = writeChain
+      .then(() => writeIdb(snapshot))
+      .then((okIdb) => {
+        if (!okLocal && !okIdb) showToast("Couldn't save. Your phone might be out of space.");
+      });
+  }
+
+  async function syncFromStorage() {
+    const fromIdb = await readIdb();
+    const merged = rolled(mergeLists(items, readLocal(), fromIdb));
+    const changed = sig(merged) !== sig(items);
+    items = merged;
+    if (changed) render();
+    save(); // writes the full list back to both places, refilling either one if it was emptied
+  }
+
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  // ---------- dates ----------
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const keyOf = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const dateOf = (k) => {
+    const [y, m, d] = k.split("-").map(Number);
+    return new Date(y, m - 1, d, 12);
+  };
+  const todayKey = () => keyOf(new Date());
+  const daysBetween = (a, b) => Math.round((dateOf(b) - dateOf(a)) / DAY);
+
+  // today plus the next six days
+  function weekKeys() {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    const keys = [];
+    for (let n = 0; n < 7; n++) {
+      keys.push(keyOf(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return keys;
+  }
+
+  const fmt = (k, opts) => dateOf(k).toLocaleDateString(undefined, opts);
+  const monthDay = (k) => fmt(k, { month: "short", day: "numeric" });
+  const weekday = (k) => fmt(k, { weekday: "long" });
+  const dayName = (k, idx) => (idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : weekday(k));
+  const dayDate = (k, idx) => (idx < 2 ? weekday(k) + ", " : "") + monthDay(k);
+
+  function fromLabel(item) {
+    if (item.day === todayKey() && daysBetween(item.from, item.day) === 1) return "from yesterday";
+    return "from " + monthDay(item.from);
+  }
+
+  // Anything not crossed off from a day that's passed moves to today and remembers where it came from.
+  function rolled(list) {
+    const today = todayKey();
+    const now = Date.now();
+    return list.map((i) =>
+      i.deleted || i.done || i.day >= today ? i : Object.assign({}, i, { day: today, from: i.from || i.day, updated: now })
+    );
+  }
+
+  function refresh() {
+    const next = rolled(items);
+    if (sig(next) !== sig(items)) {
+      items = next;
+      save();
+    }
+    render();
+  }
+
+  // ---------- actions ----------
+
+  function addTask(k, input) {
+    const text = input.value.trim().slice(0, 300);
+    if (!text) return false;
+    const now = Date.now();
+    items = items.concat({ id: newId(), text, day: k, at: now, updated: now, done: false });
+    save();
+    input.value = "";
+    render();
+    return true;
+  }
+
+  function change(id, fields) {
+    items = items.map((i) => (i.id === id ? Object.assign({}, i, fields, { updated: Date.now() }) : i));
+    save();
+    render();
+  }
+
+  function toggle(id) {
+    const it = items.find((i) => i.id === id);
+    if (it) change(id, { done: !it.done });
+  }
+
+  function moveTo(id, k, idx) {
+    const it = items.find((i) => i.id === id);
+    if (!it) return;
+    const before = { day: it.day, from: it.from || null };
+    closeSheet();
+    change(id, { day: k, from: null });
+    const where = idx === 0 ? "today" : idx === 1 ? "tomorrow" : weekday(k);
+    showToast("Moved to " + where, { label: "Undo", onClick: () => change(id, before) });
+  }
+
+  function remove(id) {
+    closeSheet();
+    change(id, { deleted: true });
+    showToast("Deleted", { label: "Undo", onClick: () => change(id, { deleted: false }) });
+  }
+
+  // tap = cross off, hold = move or delete
+  function attachPress(row, item) {
+    let timer = null;
+    let long = false;
+    let sx = 0;
+    let sy = 0;
+    const cancel = () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      row.classList.remove("pressing");
+    };
+    row.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      long = false;
+      sx = e.clientX;
+      sy = e.clientY;
+      row.classList.add("pressing");
+      timer = setTimeout(() => {
+        timer = null;
+        long = true;
+        row.classList.remove("pressing");
+        openSheet(item.id, true);
+      }, 550);
+    });
+    row.addEventListener("pointermove", (e) => {
+      if (timer && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel();
+    });
+    row.addEventListener("pointerup", () => { if (timer) cancel(); });
+    row.addEventListener("pointercancel", cancel);
+    row.addEventListener("pointerleave", cancel);
+    row.addEventListener("contextmenu", (e) => e.preventDefault());
+    row.addEventListener("click", () => {
+      if (long) { long = false; return; }
+      toggle(item.id);
+    });
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(item.id); }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); openSheet(item.id, false); }
+    });
+  }
+
+  // ---------- move / delete sheet ----------
+
+  const sheet = document.getElementById("sheet");
+  const sheetTask = document.getElementById("sheet-task");
+  const sheetDays = document.getElementById("sheet-days");
+  let sheetId = null;
+  let sheetArmed = false;
+  let sheetReturn = null;
+
+  // The sheet opens under a finger that's still down, so it ignores taps until that finger lifts.
+  function armOnLift() {
+    const arm = () => {
+      document.removeEventListener("pointerup", arm, true);
+      document.removeEventListener("pointercancel", arm, true);
+      setTimeout(() => { sheetArmed = true; }, 80);
+    };
+    document.addEventListener("pointerup", arm, true);
+    document.addEventListener("pointercancel", arm, true);
+  }
+
+  const sheetTap = (fn) => () => { if (sheetArmed) fn(); };
+
+  function openSheet(id, byPress) {
+    const it = items.find((i) => i.id === id);
+    if (!it) return;
+    sheetId = id;
+    sheetReturn = byPress ? null : document.activeElement;
+    sheetArmed = !byPress;
+    if (byPress) armOnLift();
+    sheetTask.textContent = it.text;
+    sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
+      const b = el("button", "dbtn");
+      b.type = "button";
+      const here = k === it.day;
+      b.disabled = here;
+      b.append(el("span", "dbtn-name", idx === 0 ? "Today" : fmt(k, { weekday: "short" })), el("span", "dbtn-date", here ? "Here now" : monthDay(k)));
+      b.setAttribute("aria-label", (here ? "Already on " : "Move to ") + dayName(k, idx) + ", " + monthDay(k));
+      b.addEventListener("click", sheetTap(() => moveTo(id, k, idx)));
+      return b;
+    }));
+    sheet.hidden = false;
+    document.body.classList.add("locked");
+    if (!byPress) document.getElementById("sheet-cancel").focus();
+  }
+
+  function closeSheet() {
+    if (sheet.hidden) return;
+    sheet.hidden = true;
+    sheetId = null;
+    document.body.classList.remove("locked");
+    if (sheetReturn && sheetReturn.isConnected) sheetReturn.focus();
+    sheetReturn = null;
+  }
+
+  document.getElementById("scrim").addEventListener("click", sheetTap(closeSheet));
+  document.getElementById("sheet-cancel").addEventListener("click", sheetTap(closeSheet));
+  document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => remove(sheetId)));
+
+  // ---------- rendering ----------
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  let cards = [];
+  let shownWeek = "";
+
+  // The cards (and their add boxes) are only rebuilt when the day changes,
+  // so the keyboard stays up and half-typed tasks survive every save.
+  function buildWeek() {
+    const keys = weekKeys();
+    if (keys.join() === shownWeek) return;
+    shownWeek = keys.join();
+    const drafts = new Map(cards.map((c) => [c.key, c.input.value]));
+    cards = keys.map(makeCard);
+    for (const c of cards) c.input.value = drafts.get(c.key) || "";
+    weekEl.replaceChildren(...cards.map((c) => c.section));
+    rangeEl.textContent = monthDay(keys[0]) + " – " + monthDay(keys[6]);
+  }
+
+  function makeCard(k, idx) {
+    const section = el("section", "day" + (idx === 0 ? " today" : ""));
+    const head = el("div", "day-head");
+    const title = el("h2", "day-title");
+    title.append(el("span", "day-name", dayName(k, idx)), el("span", "day-date", dayDate(k, idx)));
+    const count = el("span", "count");
+    head.append(title, count);
+
+    const ul = el("ul", "tasks");
+
+    const form = el("form", "add");
+    form.setAttribute("autocomplete", "off");
+    const plus = el("button", "plus");
+    plus.type = "button";
+    plus.innerHTML = PLUS_SVG;
+    plus.setAttribute("aria-label", "Add to " + dayName(k, idx));
+    const input = el("input");
+    input.type = "text";
+    input.maxLength = 300;
+    input.placeholder = "Add a task";
+    input.setAttribute("aria-label", "Add a task for " + dayName(k, idx));
+    input.setAttribute("enterkeyhint", "enter");
+    input.setAttribute("autocapitalize", "sentences");
+    form.append(plus, input);
+
+    // return adds the task and keeps the keyboard up for the next one; return on an empty box puts it away
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!addTask(k, input)) input.blur();
+    });
+    plus.addEventListener("click", () => {
+      addTask(k, input);
+      input.focus();
+    });
+
+    section.append(head, ul, form);
+    return { key: k, section, count, ul, input };
+  }
+
+  function rowFor(item) {
+    const li = document.createElement("li");
+    const row = el("div", "row" + (item.done ? " done" : ""));
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-pressed", String(!!item.done));
+    row.dataset.id = item.id;
+    const mark = el("span", "mark");
+    mark.innerHTML = CHECK_SVG;
+    const body = el("span", "body");
+    body.append(el("span", "text", item.text));
+    if (item.from && item.from < item.day) body.append(el("span", "tag", fromLabel(item)));
+    row.append(mark, body);
+    attachPress(row, item);
+    li.append(row);
+    return li;
+  }
+
+  function render() {
+    buildWeek();
+    const focusedId = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.id : null;
+
+    const byDay = new Map(cards.map((c) => [c.key, []]));
+    for (const it of items) {
+      if (!it.deleted && byDay.has(it.day)) byDay.get(it.day).push(it);
+    }
+
+    for (const c of cards) {
+      const list = byDay.get(c.key).sort((a, b) => a.at - b.at);
+      const done = list.filter((i) => i.done).length;
+      c.ul.replaceChildren(...list.map(rowFor));
+      c.ul.hidden = !list.length;
+      c.count.textContent = !list.length ? "" : done === list.length ? "All done" : done + " of " + list.length + " done";
+      c.count.classList.toggle("all", list.length > 0 && done === list.length);
+    }
+
+    if (focusedId) {
+      const again = weekEl.querySelector('[data-id="' + CSS.escape(focusedId) + '"]');
+      if (again) again.focus();
+    }
+  }
+
+  // ---------- toast ----------
+
+  let toastTimer = null;
+  function hideToast() {
+    toastEl.hidden = true;
+    toastEl.replaceChildren();
+  }
+  function showToast(msg, action) {
+    toastEl.replaceChildren(el("span", null, msg));
+    if (action) {
+      const b = el("button", null, action.label);
+      b.type = "button";
+      b.addEventListener("click", () => { hideToast(); action.onClick(); });
+      toastEl.append(b);
+    }
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, action ? 5000 : 4000);
+  }
+
+  // ---------- online backup ----------
+  // The whole list (deletes included) lives in planner.json in the private brain-dump-notes repo.
+  // Every sync pulls it, merges it with what's on the phone, and pushes the result only if GitHub
+  // is missing something. A file it can't read is never overwritten.
+
+  const REPO = "https://api.github.com/repos/cqr1os/brain-dump-notes";
+  const API = REPO + "/contents/planner.json";
+  const BACKUP_KEY = "planner-backup-key";
+  const BACKUP_AT = "planner-backup-at";
+  const backup = { key: null, state: "idle", at: 0 };
+
+  const backupBtn = document.getElementById("backup");
+  const panel = document.getElementById("panel");
+  const panelSetup = document.getElementById("panel-setup");
+  const panelOn = document.getElementById("panel-on");
+  const panelStatus = document.getElementById("panel-status");
+  const keyForm = document.getElementById("key-form");
+  const keyInput = document.getElementById("key-input");
+  const keyMsg = document.getElementById("key-msg");
+  const keySave = document.getElementById("key-save");
+
+  const ghHeaders = (key) => ({ Authorization: "Bearer " + key, Accept: "application/vnd.github+json" });
+
+  function toB64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  function fromB64(b64) {
+    const bin = atob(b64.replace(/\s/g, ""));
+    return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  }
+
+  function backupError(status) {
+    if (status === 401) return { kind: "bad-key" };
+    if (status === 403 || status === 404) return { kind: "no-access" };
+    return { kind: "error" };
+  }
+
+  async function pullRemote(key) {
+    const res = await fetch(API + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(key) });
+    if (res.status === 404) return { list: [], sha: null }; // no file yet; a key without access fails on the push instead
+    if (!res.ok) throw backupError(res.status);
+    const j = await res.json();
+    if (!j.content && j.size > 0) throw { kind: "error" };
+    try {
+      const parsed = JSON.parse(fromB64(j.content || "") || "[]");
+      return { list: Array.isArray(parsed) ? parsed : parsed.items || [], sha: j.sha };
+    } catch (e) {
+      throw { kind: "error" };
+    }
+  }
+
+  function pushRemote(key, list, sha) {
+    const body = {
+      message: "Back up planner",
+      content: toB64(JSON.stringify({ updated: new Date().toISOString(), items: list }, null, 1) + "\n")
+    };
+    if (sha) body.sha = sha;
+    return fetch(API, {
+      method: "PUT",
+      cache: "no-store",
+      headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders(key)),
+      body: JSON.stringify(body)
+    });
+  }
+
+  async function runSync() {
+    const key = backup.key;
+    setBackup({ state: "syncing" });
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const remote = await pullRemote(key);
+        const remoteList = mergeLists(remote.list);
+        const merged = rolled(mergeLists(remoteList, readLocal(), items));
+        if (sig(merged) !== sig(items)) {
+          items = merged;
+          persistLocal();
+          render();
+        }
+        if (remote.sha && sig(merged) === sig(remoteList)) return setBackup({ state: "ok", at: Date.now() });
+        const res = await pushRemote(key, merged, remote.sha);
+        if (res.ok) return setBackup({ state: "ok", at: Date.now() });
+        if (res.status === 409 || res.status === 422) continue; // GitHub changed meanwhile: pull and merge again
+        throw backupError(res.status);
+      }
+      throw { kind: "error" };
+    } catch (e) {
+      if (key !== backup.key) return;
+      setBackup({ state: e && e.kind ? e.kind : "offline" });
+    }
+  }
+
+  let syncRun = null;
+  let syncQueued = false;
+  function syncBackup() {
+    if (!backup.key) return Promise.resolve();
+    if (syncRun) {
+      syncQueued = true;
+      return syncRun;
+    }
+    syncRun = runSync().finally(() => {
+      syncRun = null;
+      if (syncQueued) {
+        syncQueued = false;
+        syncBackup();
+      }
+    });
+    return syncRun;
+  }
+
+  let backupTimer = null;
+  function scheduleBackup(delay) {
+    if (!backup.key) return;
+    clearTimeout(backupTimer);
+    backupTimer = setTimeout(() => {
+      backupTimer = null;
+      syncBackup();
+    }, delay == null ? 1500 : delay);
+  }
+
+  function flushBackup() {
+    if (!backupTimer) return;
+    clearTimeout(backupTimer);
+    backupTimer = null;
+    syncBackup();
+  }
+
+  function storeKey(k) {
+    try {
+      if (k) localStorage.setItem(BACKUP_KEY, k);
+      else localStorage.removeItem(BACKUP_KEY);
+    } catch (e) {}
+    idbRun("readwrite", (s) => (k ? s.put(k, BACKUP_KEY) : s.delete(BACKUP_KEY)));
+  }
+
+  async function loadKey() {
+    let k = null;
+    try {
+      k = localStorage.getItem(BACKUP_KEY);
+      backup.at = Number(localStorage.getItem(BACKUP_AT)) || 0;
+    } catch (e) {}
+    if (!k) k = await idbRun("readonly", (s) => s.get(BACKUP_KEY));
+    if (typeof k === "string" && k) {
+      backup.key = k;
+      storeKey(k);
+    }
+    renderBackup();
+  }
+
+  const timeOf = (ts) => new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+  function whenShort(ts) {
+    if (keyOf(new Date(ts)) === todayKey()) return timeOf(ts);
+    return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ", " + timeOf(ts);
+  }
+
+  function setBackup(patch) {
+    Object.assign(backup, patch);
+    if (patch.at) {
+      try { localStorage.setItem(BACKUP_AT, String(patch.at)); } catch (e) {}
+    }
+    renderBackup();
+  }
+
+  function backupText() {
+    if (!backup.key) return "Turn on backup";
+    switch (backup.state) {
+      case "syncing": return "Backing up…";
+      case "offline": return "No connection. It'll back up when you're online.";
+      case "bad-key": return "Backup stopped: GitHub didn't accept your key. Tap to fix.";
+      case "no-access": return "Backup stopped: your key can't reach brain-dump-notes. Tap to fix.";
+      case "error": return "Backup didn't go through. It'll try again.";
+      default: return backup.at ? "Backed up " + whenShort(backup.at) : "Backup is on";
+    }
+  }
+
+  function renderBackup() {
+    backupBtn.textContent = backupText();
+    backupBtn.classList.toggle("warn", backup.state === "bad-key" || backup.state === "no-access");
+    panelStatus.textContent = "Backup is on. " +
+      (backup.at ? "Last backup: " + whenShort(backup.at) + ". " : "") +
+      "Your plans are in planner.json in brain-dump-notes on your GitHub, so if this phone ever loses them, paste your key here again and they come back.";
+  }
+
+  function showSetup(message, bad) {
+    panelSetup.hidden = false;
+    panelOn.hidden = true;
+    keyMsg.textContent = message || "";
+    keyMsg.classList.toggle("bad", !!bad);
+  }
+
+  function openPanel() {
+    const broken = backup.state === "bad-key" || backup.state === "no-access";
+    if (!backup.key) showSetup();
+    else if (broken) showSetup(backupText().replace(" Tap to fix.", " Make a new key and paste it here."), true);
+    else {
+      panelSetup.hidden = true;
+      panelOn.hidden = false;
+    }
+    panel.hidden = false;
+    panel.scrollTop = 0;
+  }
+
+  function closePanel() {
+    panel.hidden = true;
+    keyInput.value = "";
+  }
+
+  backupBtn.addEventListener("click", openPanel);
+  panel.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closePanel));
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!panel.hidden) closePanel();
+    else closeSheet();
+  });
+  document.getElementById("change-key").addEventListener("click", () => showSetup());
+  document.getElementById("backup-now").addEventListener("click", () => {
+    closePanel();
+    syncBackup();
+  });
+  document.getElementById("backup-off").addEventListener("click", () => {
+    backup.key = null;
+    storeKey(null);
+    setBackup({ state: "idle" });
+    closePanel();
+    showToast("Backup is off. Your plans are still on this phone.");
+  });
+
+  keyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const k = keyInput.value.trim();
+    if (!k) return showSetup("Paste your key first.", true);
+    showSetup("Checking your key…");
+    keySave.disabled = true;
+    try {
+      let res = await fetch(API + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
+      // planner.json doesn't exist until the first backup, so a 404 there means: check the repo itself
+      if (res.status === 404) res = await fetch(REPO + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
+      if (res.status === 401) showSetup("GitHub didn't accept that key. Copy it again and paste the whole thing.", true);
+      else if (res.status === 403 || res.status === 404) showSetup("That key can't open brain-dump-notes. Check steps 2 and 3, then make a new key.", true);
+      else if (!res.ok) showSetup("GitHub had a problem. Try again in a minute.", true);
+      else {
+        backup.key = k;
+        storeKey(k);
+        closePanel();
+        await syncBackup();
+        if (backup.state === "ok") showToast("Backup is on");
+        else if (backup.state === "no-access") openPanel();
+      }
+    } catch (err) {
+      showSetup("No connection. Try again when you're online.", true);
+    }
+    keySave.disabled = false;
+  });
+
+  // ---------- boot ----------
+
+  // Safari and the home-screen app keep separate plans on iPhone, so say so when this isn't the app
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isApp = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+  document.getElementById("safari-banner").hidden = !(isIOS && !isApp);
+
+  // at midnight the week shifts by a day and leftovers roll onto the new today
+  let midnightTimer = null;
+  function scheduleMidnight() {
+    clearTimeout(midnightTimer);
+    const next = new Date();
+    next.setHours(24, 0, 1, 0);
+    midnightTimer = setTimeout(() => {
+      refresh();
+      scheduleMidnight();
+    }, next - Date.now());
+  }
+
+  refresh();
+  renderBackup();
+  syncFromStorage();
+  loadKey().then(() => scheduleBackup(0));
+  scheduleMidnight();
+
+  // coming back to the app: catch up on the date, pull in anything saved
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refresh();
+      renderBackup();
+      syncFromStorage();
+      scheduleBackup(0); // pull anything added on GitHub right away
+      scheduleMidnight();
+    } else {
+      writeLocal(withStored());
+      flushBackup();
+    }
+  });
+  window.addEventListener("online", () => scheduleBackup(0));
+  window.addEventListener("pagehide", () => writeLocal(withStored()));
+
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+  if ("serviceWorker" in navigator) {
+    // when a new version arrives, switch to it right away unless you're mid-typing
+    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value;
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloadWhenHidden = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController) return;
+      if (!typing()) location.reload();
+      else reloadWhenHidden = true;
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden" && reloadWhenHidden) location.reload();
+    });
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+</body>
+</html>
