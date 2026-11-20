@@ -115,9 +115,111 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outl
 }
 .banner strong { display: block; margin-bottom: 2px; }
 
-.title { padding: 0 4px; }
+.title { padding: 16px 4px 0; }
 .title h1 { margin: 0; font-size: clamp(24px, 7vw, 30px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
 .week-count { margin: 4px 0 0; color: var(--muted); font-size: 17px; font-weight: 700; font-style: italic; }
+
+/* Notes | Week switch at the top */
+.switch {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: 14px;
+  background: var(--bar-bg);
+}
+.switch-btn {
+  height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 700;
+}
+.switch-btn[aria-selected="true"] { background: var(--paper); color: var(--ink); font-weight: 800; box-shadow: 0 1px 3px rgba(80, 50, 10, 0.14); }
+.pg.slide-left { animation: slide-left 0.22s ease-out; }
+.pg.slide-right { animation: slide-right 0.22s ease-out; }
+@keyframes slide-left { from { transform: translateX(32px); opacity: 0; } }
+@keyframes slide-right { from { transform: translateX(-32px); opacity: 0; } }
+
+.side {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* the Notes page: one wide column of paper */
+.notes-col { max-width: 760px; margin: 0 auto; }
+.say {
+  margin-top: 16px;
+  padding: 14px 14px 10px 16px;
+  background: var(--paper);
+  border: 2px solid var(--soft);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.say:focus-within { border-color: var(--ink); }
+#say {
+  display: block;
+  width: 100%;
+  min-height: 62px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+#say::placeholder { color: var(--soft); font-style: italic; opacity: 1; }
+.say-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.say-status { flex: 1; min-width: 0; color: var(--muted); font-size: 15px; font-weight: 700; font-style: italic; line-height: 1.3; }
+.mic {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+}
+.mic svg { width: 24px; height: 24px; }
+.mic.on { background: var(--danger); animation: listening 1.3s ease-in-out infinite; }
+@keyframes listening { 50% { box-shadow: 0 0 0 9px rgba(214, 59, 59, 0.2); } }
+.say-save { height: 50px; padding: 0 22px; }
+
+.notes-list { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.note-day { padding: 14px 16px 2px; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow); }
+.note-day-name {
+  display: inline-block;
+  margin: 0 0 2px -6px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.note-day.today .note-day-name { background: var(--hl); color: var(--hl-ink); }
+.note-day .tasks li:last-child { border-bottom: 0; }
+.note-time {
+  flex: none;
+  width: 70px;
+  padding-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.notes-empty { margin: 0; padding: 28px 12px; color: var(--muted); font-size: 18px; font-weight: 700; font-style: italic; text-align: center; }
 
 main {
   display: flex;
@@ -359,7 +461,7 @@ main {
 /* Mac and other big screens */
 @media (min-width: 640px) {
   .page { max-width: 1680px; }
-  .top, main { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+  .top, main, .side { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
   .title h1 { font-size: 34px; }
   main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .day { min-height: 200px; }
@@ -381,7 +483,7 @@ main {
 /* big windows: four days on top, three wider ones below, filling the window */
 @media (min-width: 1100px) {
   main { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .day { grid-column: span 3; min-height: max(240px, calc((100dvh - 250px) / 2)); }
+  .day { grid-column: span 3; min-height: max(240px, calc((100dvh - 320px) / 2)); }
   .day:nth-child(n+5) { grid-column: span 4; }
 }
 @keyframes sheet-pop { from { transform: scale(0.97); opacity: 0; } }
@@ -398,7 +500,7 @@ main {
 
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
-  .sheet, .row.pop .mark, .row.pop .text { animation: none; }
+  .sheet, .row.pop .mark, .row.pop .text, .pg, .mic.on { animation: none !important; }
   .bar-fill { transition: none; }
 }
 </style>
@@ -409,15 +511,43 @@ main {
     <strong>You're in Safari, not the app.</strong>
     <span id="banner-text"></span>
   </div>
-  <div class="inner page title">
-    <h1 id="today-title">This week</h1>
-    <p class="week-count" id="week-count"></p>
+  <div class="switch" role="tablist" aria-label="Pages">
+    <button class="switch-btn" id="tab-notes" type="button" role="tab" aria-controls="page-notes" aria-selected="true">Notes</button>
+    <button class="switch-btn" id="tab-week" type="button" role="tab" aria-controls="page-week" aria-selected="false" tabindex="-1">Week</button>
   </div>
 </header>
 
-<main class="inner page" id="week"></main>
+<section class="pg" id="page-notes" role="tabpanel" aria-labelledby="tab-notes">
+  <div class="side">
+    <div class="notes-col">
+      <div class="title">
+        <h1>Notes</h1>
+        <p class="week-count" id="notes-sub">Saved on this device</p>
+      </div>
+      <form class="say" id="say-form" autocomplete="off">
+        <textarea id="say" rows="2" maxlength="5000" placeholder="What's on your mind?" aria-label="What's on your mind?" autocapitalize="sentences"></textarea>
+        <div class="say-bar">
+          <span class="say-status" id="say-status" role="status" aria-live="polite"></span>
+          <button class="mic" id="mic" type="button" aria-label="Talk instead of typing" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <button class="pbtn pbtn-main say-save" id="say-save" type="submit" hidden>Save</button>
+        </div>
+      </form>
+      <div class="notes-list" id="notes-list"></div>
+      <p class="hint" id="notes-hint">Tap a note to cross it out. Hold it to put it on a day or delete it.</p>
+    </div>
+  </div>
+</section>
 
-<p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
+<section class="pg" id="page-week" role="tabpanel" aria-labelledby="tab-week" hidden>
+  <div class="side">
+    <div class="inner page title">
+      <h1 id="today-title">This week</h1>
+      <p class="week-count" id="week-count"></p>
+    </div>
+  </div>
+  <main class="inner page" id="week"></main>
+  <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
+</section>
 
 <div class="inner page foot">
   <button class="backup-link" id="backup" type="button">Turn on sync</button>
@@ -427,7 +557,7 @@ main {
   <div class="scrim" id="scrim"></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-task">
     <p class="sheet-task" id="sheet-task"></p>
-    <p class="sheet-label">Move to</p>
+    <p class="sheet-label" id="sheet-label">Move to</p>
     <div class="sheet-days" id="sheet-days"></div>
     <div class="sheet-actions">
       <button class="pbtn pbtn-danger" id="sheet-delete" type="button">Delete</button>
@@ -441,7 +571,7 @@ main {
     <h2 class="panel-title" id="panel-title">Sync your planner</h2>
 
     <div class="panel-view" id="panel-setup">
-      <p class="panel-p">Put the same key in the planner on your Mac and on your phone, and both show the same plans. They're saved in a file called planner.json in your private brain-dump-notes repo on GitHub, where Brain Dump saves too. Only you can see it.</p>
+      <p class="panel-p">Put the same key in the Planner on your Mac and on your phone, and both show the same notes and plans. They're saved in your private brain-dump-notes repo on GitHub (notes.json and planner.json), where Brain Dump saves too. Only you can see it.</p>
       <p class="panel-p quiet" id="setup-other"></p>
       <ol class="steps">
         <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+sync&amp;description=Lets+the+Planner+app+sync+plans&amp;target_name=cqr1os&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
@@ -502,34 +632,42 @@ main {
   // comes back empty can never wipe plans. Deletes are kept as markers so they stick.
   // Each task: {id, text, day: "YYYY-MM-DD", at, updated, done, from?, deleted?}
 
-  const valid = (i) => i && typeof i.id === "string" && typeof i.text === "string" && typeof i.at === "number" && typeof i.day === "string";
+  // Notes (the Notes page) are stored the same way: {id, text, at, updated, done, deleted?},
+  // the same shape Brain Dump uses, so both apps can share notes.json online.
+  const NOTES_KEY = "planner-notes-v1";
+  const DRAFT_KEY = "planner-notes-draft";
+
+  const validNote = (i) => i && typeof i.id === "string" && typeof i.text === "string" && typeof i.at === "number";
+  const valid = (i) => validNote(i) && typeof i.day === "string";
   const stamp = (i) => i.updated || i.at;
 
-  function mergeLists(...lists) {
+  function mergeWith(check, lists) {
     const byId = new Map();
     for (const list of lists) {
       if (!Array.isArray(list)) continue;
       for (const it of list) {
-        if (!valid(it)) continue;
+        if (!check(it)) continue;
         const prev = byId.get(it.id);
         if (!prev || stamp(it) >= stamp(prev)) byId.set(it.id, it);
       }
     }
     return [...byId.values()];
   }
+  const mergeLists = (...lists) => mergeWith(valid, lists);
+  const mergeNotes = (...lists) => mergeWith(validNote, lists);
 
-  function readLocal() {
+  function readLocal(k = KEY) {
     try {
-      const v = JSON.parse(localStorage.getItem(KEY) || "[]");
+      const v = JSON.parse(localStorage.getItem(k) || "[]");
       return Array.isArray(v) ? v : [];
     } catch (e) {
       return [];
     }
   }
 
-  function writeLocal(list) {
+  function writeLocal(list, k = KEY) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(list));
+      localStorage.setItem(k, JSON.stringify(list));
       return true;
     } catch (e) {
       return false;
@@ -578,13 +716,13 @@ main {
     return null;
   }
 
-  async function readIdb() {
-    const v = await idbRun("readonly", (s) => s.get(KEY));
+  async function readIdb(k = KEY) {
+    const v = await idbRun("readonly", (s) => s.get(k));
     return Array.isArray(v) ? v : [];
   }
 
-  async function writeIdb(list) {
-    return (await idbRun("readwrite", (s) => s.put(list, KEY))) !== null;
+  async function writeIdb(list, k = KEY) {
+    return (await idbRun("readwrite", (s) => s.put(list, k))) !== null;
   }
 
   let items = mergeLists(readLocal());
@@ -620,7 +758,36 @@ main {
     save(); // writes the full list back to both places, refilling either one if it was emptied
   }
 
-  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  let notes = mergeNotes(readLocal(NOTES_KEY));
+  let notesChain = Promise.resolve();
+  const notesWithStored = () => mergeNotes(readLocal(NOTES_KEY), notes);
+
+  function saveNotes() {
+    persistNotes();
+    scheduleBackup();
+  }
+
+  function persistNotes() {
+    notes = notesWithStored();
+    const snapshot = notes.slice();
+    const okLocal = writeLocal(snapshot, NOTES_KEY);
+    notesChain = notesChain
+      .then(() => writeIdb(snapshot, NOTES_KEY))
+      .then((okIdb) => {
+        if (!okLocal && !okIdb) showToast("Couldn't save. This device might be out of space.");
+      });
+  }
+
+  async function syncNotesFromStorage() {
+    const fromIdb = await readIdb(NOTES_KEY);
+    const merged = mergeNotes(notes, readLocal(NOTES_KEY), fromIdb);
+    const changed = sig(merged) !== sig(notes);
+    notes = merged;
+    if (changed) renderNotes();
+    saveNotes();
+  }
+
+  const newId =() => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   // ---------- dates ----------
 
@@ -672,6 +839,7 @@ main {
       save();
     }
     render();
+    renderNotes(); // "Today" and "Yesterday" shift at midnight too
   }
 
   // ---------- actions ----------
@@ -717,8 +885,56 @@ main {
     showToast("Deleted", { label: "Undo", onClick: () => change(id, { deleted: false }) });
   }
 
-  // tap = cross off, hold = move or delete
-  function attachPress(row, item) {
+  // notes
+
+  function addNote() {
+    stopTalking();
+    const text = sayEl.value.trim().slice(0, 5000);
+    if (!text) return false;
+    const now = Date.now();
+    notes = notes.concat({ id: newId(), text, at: now, updated: now, done: false });
+    saveNotes();
+    sayEl.value = "";
+    sayChanged();
+    renderNotes();
+    return true;
+  }
+
+  function changeNote(id, fields) {
+    notes = notes.map((n) => (n.id === id ? Object.assign({}, n, fields, { updated: Date.now() }) : n));
+    saveNotes();
+    renderNotes();
+  }
+
+  function toggleNote(id) {
+    const n = notes.find((x) => x.id === id);
+    if (!n) return;
+    popId = n.done ? null : id;
+    changeNote(id, { done: !n.done });
+  }
+
+  function removeNote(id) {
+    closeSheet();
+    changeNote(id, { deleted: true });
+    showToast("Note deleted", { label: "Undo", onClick: () => changeNote(id, { deleted: false }) });
+  }
+
+  // a thought becomes a task on one of the next seven days; the note stays where it is
+  function putOnDay(noteId, k, idx) {
+    const n = notes.find((x) => x.id === noteId);
+    if (!n) return;
+    closeSheet();
+    const now = Date.now();
+    const id = newId();
+    items = items.concat({ id, text: n.text.slice(0, 1000), day: k, at: now, updated: now, done: false });
+    save();
+    render();
+    const where = idx === 0 ? "today" : idx === 1 ? "tomorrow" : weekday(k);
+    showToast("Added to " + where + " in your week", { label: "Undo", onClick: () => change(id, { deleted: true }) });
+  }
+
+  // tap = cross off, hold = the menu
+  function attachPress(row, id, onTap, onHold) {
     let timer = null;
     let long = false;
     let sx = 0;
@@ -738,7 +954,7 @@ main {
         timer = null;
         long = true;
         row.classList.remove("pressing");
-        openSheet(item.id, true);
+        onHold(true);
       }, 550);
     });
     row.addEventListener("pointermove", (e) => {
@@ -752,15 +968,15 @@ main {
       e.preventDefault();
       cancel();
       long = true; // swallow the click a ctrl-click may send after this
-      if (sheetId !== item.id) openSheet(item.id, true);
+      if (sheetId !== id) onHold(true);
     });
     row.addEventListener("click", () => {
       if (long) { long = false; return; }
-      toggle(item.id);
+      onTap();
     });
     row.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(item.id); }
-      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); openSheet(item.id, false); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap(); }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); onHold(false); }
     });
   }
 
@@ -769,6 +985,7 @@ main {
   const sheet = document.getElementById("sheet");
   const sheetTask = document.getElementById("sheet-task");
   const sheetDays = document.getElementById("sheet-days");
+  const sheetLabel = document.getElementById("sheet-label");
   let sheetId = null;
   let sheetArmed = false;
   let sheetReturn = null;
@@ -786,22 +1003,27 @@ main {
 
   const sheetTap = (fn) => () => { if (sheetArmed) fn(); };
 
-  function openSheet(id, byPress) {
-    const it = items.find((i) => i.id === id);
+  // kind "task": move it to another day or delete it. kind "note": put it on a day or delete it.
+  let sheetKind = "task";
+  function openSheet(id, byPress, kind = "task") {
+    const isNote = kind === "note";
+    const it = (isNote ? notes : items).find((i) => i.id === id);
     if (!it) return;
     sheetId = id;
+    sheetKind = kind;
     sheetReturn = byPress ? null : document.activeElement;
     sheetArmed = !byPress;
     if (byPress) armOnLift();
     sheetTask.textContent = it.text;
+    sheetLabel.textContent = isNote ? "Put on a day" : "Move to";
     sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
       const b = el("button", "dbtn");
       b.type = "button";
-      const here = k === it.day;
+      const here = !isNote && k === it.day;
       b.disabled = here;
       b.append(el("span", "dbtn-name", idx === 0 ? "Today" : fmt(k, { weekday: "short" })), el("span", "dbtn-date", here ? "Here now" : monthDay(k)));
-      b.setAttribute("aria-label", (here ? "Already on " : "Move to ") + dayName(k, idx) + ", " + monthDay(k));
-      b.addEventListener("click", sheetTap(() => moveTo(id, k, idx)));
+      b.setAttribute("aria-label", (here ? "Already on " : isNote ? "Put on " : "Move to ") + dayName(k, idx) + ", " + monthDay(k));
+      b.addEventListener("click", sheetTap(() => (isNote ? putOnDay(id, k, idx) : moveTo(id, k, idx))));
       return b;
     }));
     sheet.hidden = false;
@@ -820,7 +1042,7 @@ main {
 
   document.getElementById("scrim").addEventListener("click", sheetTap(closeSheet));
   document.getElementById("sheet-cancel").addEventListener("click", sheetTap(closeSheet));
-  document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => remove(sheetId)));
+  document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => (sheetKind === "note" ? removeNote(sheetId) : remove(sheetId))));
 
   // ---------- rendering ----------
 
@@ -904,7 +1126,7 @@ main {
     body.append(el("span", "text", item.text));
     if (item.from && item.from < item.day) body.append(el("span", "tag", fromLabel(item)));
     row.append(mark, body);
-    attachPress(row, item);
+    attachPress(row, item.id, () => toggle(item.id), (byPress) => openSheet(item.id, byPress));
     li.append(row);
     return li;
   }
@@ -946,6 +1168,273 @@ main {
     }
   }
 
+  // ---------- notes page ----------
+
+  const notesListEl = document.getElementById("notes-list");
+  const sayForm = document.getElementById("say-form");
+  const sayEl = document.getElementById("say");
+  const saySave = document.getElementById("say-save");
+  const sayStatus = document.getElementById("say-status");
+  const micBtn = document.getElementById("mic");
+
+  const clock = (ts) => new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+  function noteDayLabel(k) {
+    const ago = daysBetween(k, todayKey());
+    if (ago === 0) return "Today";
+    if (ago === 1) return "Yesterday";
+    if (ago > 1 && ago < 7) return weekday(k);
+    const sameYear = k.slice(0, 4) === todayKey().slice(0, 4);
+    return fmt(k, sameYear ? { weekday: "long", month: "short", day: "numeric" } : { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function noteRow(n) {
+    const li = document.createElement("li");
+    const row = el("div", "row note" + (n.done ? " done" : "") + (n.id === popId ? " pop" : ""));
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-pressed", String(!!n.done));
+    row.dataset.id = n.id;
+    const time = el("span", "note-time", clock(n.at));
+    const body = el("span", "body");
+    body.append(el("span", "text", n.text));
+    row.append(time, body);
+    attachPress(row, n.id, () => toggleNote(n.id), (byPress) => openSheet(n.id, byPress, "note"));
+    li.append(row);
+    return li;
+  }
+
+  // newest first, one paper card per day
+  function renderNotes() {
+    const focusedId = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.id : null;
+    const live = notes.filter((n) => !n.deleted).sort((a, b) => b.at - a.at);
+    const groups = new Map();
+    for (const n of live) {
+      const k = keyOf(new Date(n.at));
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(n);
+    }
+    const cardsOut = [...groups].map(([k, list]) => {
+      const sec = el("section", "note-day" + (k === todayKey() ? " today" : ""));
+      sec.append(el("h2", "note-day-name", noteDayLabel(k)));
+      const ul = el("ul", "tasks");
+      ul.append(...list.map(noteRow));
+      sec.append(ul);
+      return sec;
+    });
+    if (!cardsOut.length) cardsOut.push(el("p", "notes-empty", "Your notes show up here, newest first, with the time you wrote them."));
+    notesListEl.replaceChildren(...cardsOut);
+    popId = null;
+    if (focusedId) {
+      const again = notesListEl.querySelector('[data-id="' + CSS.escape(focusedId) + '"]');
+      if (again) again.focus();
+    }
+  }
+
+  // The box saves itself as you type, so a half-written thought survives closing the app.
+  let draftTimer = null;
+  function saveDraft() {
+    const v = sayEl.value;
+    try {
+      if (v) localStorage.setItem(DRAFT_KEY, v);
+      else localStorage.removeItem(DRAFT_KEY);
+    } catch (e) {}
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => idbRun("readwrite", (s) => (v ? s.put(v, DRAFT_KEY) : s.delete(DRAFT_KEY))), 300);
+  }
+
+  async function loadDraft() {
+    let v = null;
+    try { v = localStorage.getItem(DRAFT_KEY); } catch (e) {}
+    if (!v) v = await idbRun("readonly", (s) => s.get(DRAFT_KEY));
+    if (typeof v === "string" && v && !sayEl.value) {
+      sayEl.value = v;
+      sayChanged();
+    }
+  }
+
+  function growSay() {
+    sayEl.style.height = "auto";
+    sayEl.style.height = Math.min(sayEl.scrollHeight + 2, 420) + "px";
+  }
+
+  function sayChanged() {
+    growSay();
+    saySave.hidden = !sayEl.value.trim();
+    saveDraft();
+  }
+
+  sayEl.addEventListener("input", sayChanged);
+  // return saves the note (shift+return makes a new line on a Mac); return on an empty box puts the keyboard away
+  sayEl.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    e.preventDefault();
+    if (!addNote()) sayEl.blur();
+  });
+  sayForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    addNote();
+    if (finePointer) sayEl.focus();
+  });
+
+  // ---------- talking instead of typing ----------
+  // Safari's built-in speech-to-text. If it isn't allowed here, say how to use the keyboard's mic instead.
+
+  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const keyboardMic = isIOS
+    ? "Tap the box, then the mic key on your keyboard."
+    : "Click the box, then press the mic key (F5) on your keyboard.";
+  let rec = null;
+  let recSession = 0;
+  let statusTimer = null;
+
+  function setSayStatus(msg, stay) {
+    clearTimeout(statusTimer);
+    sayStatus.textContent = msg || "";
+    if (msg && !stay) statusTimer = setTimeout(() => { sayStatus.textContent = ""; }, 7000);
+  }
+
+  function setListening(on) {
+    micBtn.classList.toggle("on", on);
+    micBtn.setAttribute("aria-pressed", String(on));
+    micBtn.setAttribute("aria-label", on ? "Stop talking" : "Talk instead of typing");
+    if (on) setSayStatus("Listening… " + tapWord.toLowerCase() + " the mic to stop.", true);
+    else if (sayStatus.textContent.startsWith("Listening")) setSayStatus("");
+  }
+
+  // some phones send the whole sentence again in each new piece, so don't repeat it
+  function joinSpeech(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    if (b.toLowerCase().startsWith(a.toLowerCase())) return b;
+    return a + " " + b;
+  }
+
+  function stopTalking() {
+    if (!rec) return;
+    recSession++;
+    try { rec.abort(); } catch (e) {}
+    rec = null;
+    setListening(false);
+  }
+
+  function startTalking() {
+    if (!Speech) return setSayStatus("Talking isn't available here. " + keyboardMic);
+    const session = ++recSession;
+    const base = sayEl.value.replace(/\s+$/, "");
+    let finalText = "";
+    let started = false;
+    let r;
+    try {
+      r = new Speech();
+      r.lang = navigator.language || "en-US";
+      r.interimResults = true;
+      r.continuous = true;
+    } catch (e) {
+      return setSayStatus("Talking isn't available here. " + keyboardMic);
+    }
+    r.onstart = () => {
+      if (session !== recSession) return;
+      started = true;
+      setListening(true);
+    };
+    r.onresult = (e) => {
+      if (session !== recSession) return;
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript.trim();
+        if (e.results[i].isFinal) finalText = joinSpeech(finalText, t);
+        else interim = joinSpeech(interim, t);
+      }
+      const spoken = joinSpeech(finalText, interim);
+      sayEl.value = base ? base + " " + spoken : spoken.charAt(0).toUpperCase() + spoken.slice(1);
+      sayChanged();
+    };
+    r.onerror = (e) => {
+      if (session !== recSession) return;
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") setSayStatus("The mic is blocked for this app. " + keyboardMic);
+      else if (e.error === "no-speech") setSayStatus("Didn't hear anything. " + tapWord + " the mic and try again.");
+      else if (e.error !== "aborted") setSayStatus("Talking stopped working. " + keyboardMic);
+    };
+    r.onend = () => {
+      if (session !== recSession) return;
+      rec = null;
+      setListening(false);
+      if (finalText || sayEl.value) sayEl.focus({ preventScroll: true });
+    };
+    rec = r;
+    try {
+      r.start();
+    } catch (e) {
+      rec = null;
+      return setSayStatus("Talking isn't available here. " + keyboardMic);
+    }
+    // if nothing happens at all, don't leave the button looking stuck
+    setTimeout(() => {
+      if (session === recSession && rec && !started) {
+        stopTalking();
+        setSayStatus("Talking didn't start. " + keyboardMic);
+      }
+    }, 6000);
+  }
+
+  micBtn.addEventListener("click", () => (rec ? rec.stop() : startTalking()));
+
+  // ---------- Notes / Week pages ----------
+
+  const pages = { notes: document.getElementById("page-notes"), week: document.getElementById("page-week") };
+  const tabs = { notes: document.getElementById("tab-notes"), week: document.getElementById("tab-week") };
+  let page = "notes";
+
+  function showPage(p, from) {
+    if (p !== page) stopTalking();
+    page = p;
+    for (const name of ["notes", "week"]) {
+      pages[name].hidden = name !== p;
+      tabs[name].setAttribute("aria-selected", String(name === p));
+      tabs[name].tabIndex = name === p ? 0 : -1;
+    }
+    if (from) {
+      pages[p].classList.remove("slide-left", "slide-right");
+      void pages[p].offsetWidth;
+      pages[p].classList.add(from);
+    }
+    window.scrollTo(0, 0);
+    if (p === "notes" && finePointer) sayEl.focus({ preventScroll: true });
+  }
+
+  tabs.notes.addEventListener("click", () => { if (page !== "notes") showPage("notes", "slide-right"); });
+  tabs.week.addEventListener("click", () => { if (page !== "week") showPage("week", "slide-left"); });
+  for (const t of Object.values(tabs)) {
+    t.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const next = page === "notes" ? "week" : "notes";
+      showPage(next, next === "week" ? "slide-left" : "slide-right");
+      tabs[next].focus();
+    });
+  }
+
+  // on the phone, swipe sideways to flip between the two pages
+  let swipe = null;
+  document.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    swipe = e.touches.length === 1 && sheet.hidden && panel.hidden && !e.target.closest("textarea, input")
+      ? { x: t.clientX, y: t.clientY, at: Date.now() }
+      : null;
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!swipe) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipe.x;
+    const dy = t.clientY - swipe.y;
+    const quick = Date.now() - swipe.at < 800;
+    swipe = null;
+    if (!quick || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    if (dx < 0 && page === "notes") showPage("week", "slide-left");
+    else if (dx > 0 && page === "week") showPage("notes", "slide-right");
+  }, { passive: true });
+
   // ---------- toast ----------
 
   let toastTimer = null;
@@ -978,6 +1467,7 @@ main {
   const backup = { key: null, state: "idle", at: 0 };
 
   const backupBtn = document.getElementById("backup");
+  const notesSub = document.getElementById("notes-sub");
   const panel = document.getElementById("panel");
   const panelSetup = document.getElementById("panel-setup");
   const panelOn = document.getElementById("panel-on");
@@ -1007,8 +1497,29 @@ main {
     return { kind: "error" };
   }
 
-  async function pullRemote(key) {
-    const res = await fetch(API + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(key) });
+  // Two files in the same private repo: planner.json for the week, notes.json for notes
+  // (notes.json is the same file Brain Dump uses, so notes from either app end up in both).
+  const SYNC_FILES = [
+    {
+      api: API,
+      message: "Sync planner",
+      clean: (list) => mergeLists(list),
+      merge: (remote) => rolled(mergeLists(remote, readLocal(), items)),
+      current: () => items,
+      apply: (merged) => { items = merged; persistLocal(); render(); }
+    },
+    {
+      api: REPO + "/contents/notes.json",
+      message: "Sync notes",
+      clean: (list) => mergeNotes(list),
+      merge: (remote) => mergeNotes(remote, readLocal(NOTES_KEY), notes),
+      current: () => notes,
+      apply: (merged) => { notes = merged; persistNotes(); renderNotes(); }
+    }
+  ];
+
+  async function pullRemote(key, api) {
+    const res = await fetch(api + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(key) });
     if (res.status === 404) return { list: [], sha: null }; // no file yet; a key without access fails on the push instead
     if (!res.ok) throw backupError(res.status);
     const j = await res.json();
@@ -1017,17 +1528,17 @@ main {
       const parsed = JSON.parse(fromB64(j.content || "") || "[]");
       return { list: Array.isArray(parsed) ? parsed : parsed.items || [], sha: j.sha };
     } catch (e) {
-      throw { kind: "error" };
+      throw { kind: "error" }; // never overwrite a file we can't read
     }
   }
 
-  function pushRemote(key, list, sha) {
+  function pushRemote(key, file, list, sha) {
     const body = {
-      message: "Sync planner",
+      message: file.message,
       content: toB64(JSON.stringify({ updated: new Date().toISOString(), items: list }, null, 1) + "\n")
     };
     if (sha) body.sha = sha;
-    return fetch(API, {
+    return fetch(file.api, {
       method: "PUT",
       cache: "no-store",
       headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders(key)),
@@ -1035,27 +1546,29 @@ main {
     });
   }
 
+  // pull the file, merge it with what's here, and push only if GitHub is missing something
+  async function syncFile(key, file) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const remote = await pullRemote(key, file.api);
+      const remoteList = file.clean(remote.list);
+      const merged = file.merge(remoteList);
+      if (sig(merged) !== sig(file.current())) file.apply(merged);
+      if (remote.sha && sig(merged) === sig(remoteList)) return;
+      const res = await pushRemote(key, file, merged, remote.sha);
+      if (res.ok) return;
+      if (res.status === 409 || res.status === 422) continue; // GitHub changed meanwhile: pull and merge again
+      throw backupError(res.status);
+    }
+    throw { kind: "error" };
+  }
+
   // quiet = the regular background check, which doesn't flash "Syncing…" every time
   async function runSync(quiet) {
     const key = backup.key;
     if (!quiet || backup.state !== "ok") setBackup({ state: "syncing" });
     try {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const remote = await pullRemote(key);
-        const remoteList = mergeLists(remote.list);
-        const merged = rolled(mergeLists(remoteList, readLocal(), items));
-        if (sig(merged) !== sig(items)) {
-          items = merged;
-          persistLocal();
-          render();
-        }
-        if (remote.sha && sig(merged) === sig(remoteList)) return setBackup({ state: "ok", at: Date.now() });
-        const res = await pushRemote(key, merged, remote.sha);
-        if (res.ok) return setBackup({ state: "ok", at: Date.now() });
-        if (res.status === 409 || res.status === 422) continue; // GitHub changed meanwhile: pull and merge again
-        throw backupError(res.status);
-      }
-      throw { kind: "error" };
+      for (const file of SYNC_FILES) await syncFile(key, file);
+      setBackup({ state: "ok", at: Date.now() });
     } catch (e) {
       if (key !== backup.key) return;
       setBackup({ state: e && e.kind ? e.kind : "offline" });
@@ -1150,15 +1663,16 @@ main {
 
   // what to do on the other device, worded for whichever one this is
   const otherSteps = isIOS
-    ? "To see these plans on your Mac too: open the Planner app from your Dock, click Turn on sync at the bottom, and paste this same key."
-    : "To put these plans on your phone: open cqr1os.github.io/planner in Safari on your iPhone, tap Share, then Add to Home Screen. Open Planner from your home screen, tap Turn on sync at the bottom, and paste this same key. Copy it here and paste it on your iPhone; Apple carries copy and paste across your devices.";
+    ? "To see these notes and plans on your Mac too: open the Planner app from your Dock, click Turn on sync at the bottom, and paste this same key."
+    : "To put these notes and plans on your phone: open cqr1os.github.io/planner in Safari on your iPhone, tap Share, then Add to Home Screen. Open Planner from your home screen, tap Turn on sync at the bottom, and paste this same key. Copy it here and paste it on your iPhone; Apple carries copy and paste across your devices.";
 
   function renderBackup() {
     backupBtn.textContent = backupText() + (brokenSync() ? " " + tapWord + " to fix." : "");
     backupBtn.classList.toggle("warn", brokenSync());
     panelStatus.textContent = "Sync is on. " +
       (backup.at ? "Last synced " + whenShort(backup.at) + ". " : "") +
-      "Your plans are in planner.json in brain-dump-notes on your GitHub, so if this device ever loses them, paste your key here again and they come back.";
+      "Your plans and notes are in brain-dump-notes on your GitHub, so if this device ever loses them, paste your key here again and they come back.";
+    notesSub.textContent = backup.key && !brokenSync() ? "Saved on this device and online" : "Saved on this device";
   }
 
   function showSetup(message, bad) {
@@ -1263,13 +1777,14 @@ main {
   // so say so when this isn't the app
   const isApp = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
   const bannerText = isIOS
-    ? "Plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon."
-    : "Plans you add here are kept separate from your Planner app. To make it an app, choose File, then Add to Dock, and open it from the blue icon in your Dock.";
+    ? "Notes and plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon."
+    : "Notes and plans you add here are kept separate from your Planner app. To make it an app, choose File, then Add to Dock, and open it from the blue icon in your Dock.";
   document.getElementById("banner-text").textContent = bannerText;
   document.getElementById("safari-banner").hidden = isApp || !(isIOS || isMacSafari);
 
   if (finePointer) {
     document.getElementById("hint").textContent = "Click a task to cross it off. Right-click it to move it or delete it.";
+    document.getElementById("notes-hint").textContent = "Click a note to cross it out. Right-click it to put it on a day or delete it.";
   }
 
   // at midnight the week shifts by a day and leftovers roll onto the new today
@@ -1284,9 +1799,13 @@ main {
     }, next - Date.now());
   }
 
+  // the app always opens on Notes, ready for whatever's on your mind
+  showPage("notes");
   refresh();
   renderBackup();
   syncFromStorage();
+  syncNotesFromStorage();
+  loadDraft();
   loadKey().then(() => scheduleBackup(0));
   scheduleMidnight();
 
@@ -1296,15 +1815,21 @@ main {
       refresh();
       renderBackup();
       syncFromStorage();
+      syncNotesFromStorage();
       scheduleBackup(0); // pull anything added on GitHub right away
       scheduleMidnight();
     } else {
       writeLocal(withStored());
+      writeLocal(notesWithStored(), NOTES_KEY);
+      saveDraft();
       flushBackup();
     }
   });
   window.addEventListener("online", () => scheduleBackup(0));
-  window.addEventListener("pagehide", () => writeLocal(withStored()));
+  window.addEventListener("pagehide", () => {
+    writeLocal(withStored());
+    writeLocal(notesWithStored(), NOTES_KEY);
+  });
 
   // While the planner is open, check for changes from the other device every 30 seconds,
   // and right away when you click back into the window (a Mac window can stay open all day).
@@ -1320,7 +1845,7 @@ main {
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value;
+    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
