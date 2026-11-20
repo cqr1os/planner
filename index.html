@@ -8,62 +8,75 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Planner">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f2f3f6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#13151b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3e6cc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1915" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Seven day cards, today first. System fonts so it opens instantly and feels native on iPhone. */
+/* A paper notebook: warm pages, big bold serif writing, a highlighter on today. */
 :root {
-  --bg: #f2f3f6;
-  --surface: #ffffff;
-  --ink: #1a1d26;
-  --muted: #6a7080;
-  --line: #e3e6ec;
-  --ring: #b6bbc7;
-  --hover: #f6f7f9;
-  --hi: #4dabf7;
-  --hi-ink: #0b2338;
-  --today: #228be6;
-  --tag-bg: #e3f0fd;
-  --tag-ink: #1864ab;
-  --ok: #23824f;
-  --danger: #d63b3b;
-  --danger-ink: #ffffff;
-  --focus: #3b5bdb;
-  --toast-action: #74c0fc;
-  --scrim: rgba(10, 12, 20, 0.38);
+  --desk: #f3e6cc;
+  --paper: #fffbf2;
+  --ink: #3a2203;
+  --muted: #7a4a0a;
+  --soft: #a8650f;
+  --rule: #f0dcb8;
+  --edge: #ead5ad;
+  --hl: #fac775;
+  --hl-ink: #3a2203;
+  --press: #fbecd2;
+  --hover: #fff4e0;
+  --done-ink: #a8865a;
+  --bar-bg: #f5e6c8;
+  --bar: #ba7517;
+  --bar-full: #3b6d11;
+  --tag-bg: #faeeda;
+  --tag-ink: #633806;
+  --check-ink: #fffbf2;
+  --danger: #a32d2d;
+  --focus: #185fa5;
+  --toast-bg: #3a2203;
+  --toast-ink: #fffbf2;
+  --toast-action: #fac775;
+  --scrim: rgba(40, 25, 5, 0.38);
   --warn-bg: #fff4d6;
   --warn-ink: #5a4300;
   --warn-line: #f0d27a;
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  --shadow: 0 1px 3px rgba(80, 50, 10, 0.08), 0 0 0 1px var(--edge);
+  --serif: ui-serif, "New York", Georgia, "Times New Roman", serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #13151b;
-    --surface: #1d2029;
-    --ink: #eceef3;
-    --muted: #959cab;
-    --line: #2b2f3a;
-    --ring: #4c5260;
-    --hover: #232733;
-    --hi: #4dabf7;
-    --hi-ink: #061727;
-    --today: #4dabf7;
-    --tag-bg: #16304a;
-    --tag-ink: #a5d8ff;
-    --ok: #5cc98b;
-    --danger: #ff6b6b;
-    --danger-ink: #2a0606;
-    --focus: #8ea2ff;
-    --toast-action: #1864ab;
+    --desk: #1c1915;
+    --paper: #2e2820;
+    --ink: #faeeda;
+    --muted: #f0c27a;
+    --soft: #c98a2e;
+    --rule: #443b2d;
+    --edge: #3a3226;
+    --hl: #8a5410;
+    --hl-ink: #fff6e6;
+    --press: #3d3529;
+    --hover: #352e25;
+    --done-ink: #9c8562;
+    --bar-bg: #41392b;
+    --bar: #ef9f27;
+    --bar-full: #97c459;
+    --tag-bg: #46371f;
+    --tag-ink: #fac775;
+    --check-ink: #2e2820;
+    --danger: #f09595;
+    --focus: #85b7eb;
+    --toast-bg: #faeeda;
+    --toast-ink: #2e2820;
+    --toast-action: #854f0b;
     --scrim: rgba(0, 0, 0, 0.55);
     --warn-bg: #2a2410;
     --warn-ink: #f5dc8a;
     --warn-line: #4a3e14;
+    --shadow: 0 0 0 1px var(--edge);
     color-scheme: dark;
   }
 }
@@ -72,120 +85,146 @@
 [hidden] { display: none !important; }
 html, body {
   margin: 0;
-  background: var(--bg);
+  background: var(--desk);
   color: var(--ink);
-  font-family: var(--font);
+  font-family: var(--serif);
   font-size: 17px;
-  line-height: 1.4;
+  line-height: 1.35;
 }
-body { min-height: 100dvh; padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+body { min-height: 100dvh; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
 body.locked { overflow: hidden; }
 button { font: inherit; color: inherit; }
 button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 .top {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .inner { max-width: 640px; margin: 0 auto; }
 
 .banner {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   padding: 10px 14px;
   border: 1px solid var(--warn-line);
   border-radius: 14px;
   background: var(--warn-bg);
   color: var(--warn-ink);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.35;
 }
 .banner strong { display: block; margin-bottom: 2px; }
 
-.title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; padding: 0 4px; }
-.title h1 { margin: 0; font-family: var(--font-round); font-size: 30px; letter-spacing: -0.015em; line-height: 1.15; }
-.range { color: var(--muted); font-size: 15px; }
+.title { padding: 0 4px; }
+.title h1 { margin: 0; font-size: clamp(24px, 7vw, 30px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+.week-count { margin: 4px 0 0; color: var(--muted); font-size: 17px; font-weight: 700; font-style: italic; }
 
 main {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 14px;
+  gap: 16px;
+  padding-top: 18px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-.day { background: var(--surface); border-radius: 18px; overflow: hidden; }
-.day.today { box-shadow: 0 0 0 2px var(--today); }
-.day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 13px 16px 11px; }
-.day-title { margin: 0; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; font-size: inherit; font-weight: 400; }
-.day-name { font-family: var(--font-round); font-weight: 700; font-size: 21px; letter-spacing: -0.01em; }
-.today .day-name { color: var(--today); }
-.day-date { color: var(--muted); font-size: 15px; }
-.count { flex: none; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
-.count.all { color: var(--ok); font-weight: 600; }
+.day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 4px;
+  background: var(--paper);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.day-head { display: flex; flex-direction: column; align-items: stretch; }
+.day-title { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; font-size: inherit; font-weight: inherit; }
+.day-name {
+  margin-left: -6px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.today .day-name { background: var(--hl); color: var(--hl-ink); }
+.day-date { color: var(--muted); font-size: 16px; font-style: italic; }
+.bar { height: 5px; margin: 10px 0 2px; border-radius: 3px; background: var(--bar-bg); overflow: hidden; }
+.bar-fill { width: 0; height: 100%; border-radius: 3px; background: var(--bar); transition: width 0.35s ease; }
+.bar.full .bar-fill { background: var(--bar-full); }
 
+/* each task sits on its own ruled line */
 .tasks { list-style: none; margin: 0; padding: 0; }
-.tasks li { border-top: 1px solid var(--line); }
+.tasks li { border-bottom: 1.5px solid var(--rule); }
 .row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px 16px;
+  margin: 0 -6px;
+  padding: 11px 6px;
+  border-radius: 8px;
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   transition: background-color 0.2s ease;
 }
-.row.pressing { background: var(--line); }
+.row.pressing { background: var(--press); }
 .mark {
   flex: none;
   width: 22px;
   height: 22px;
-  margin-top: 1px;
-  border-radius: 50%;
-  border: 2px solid var(--ring);
+  margin-top: 2px;
+  border: 2.5px solid var(--soft);
+  border-radius: 5px;
   display: grid;
   place-items: center;
   color: transparent;
 }
-.mark svg { width: 12px; height: 12px; }
-.row.done .mark { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.mark svg { width: 13px; height: 13px; }
+.row.done .mark { background: var(--muted); border-color: var(--muted); color: var(--check-ink); }
 .body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.text { max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
-.row.done .text { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1.5px; }
-.tag { font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--tag-ink); background: var(--tag-bg); border-radius: 6px; padding: 0 7px; }
+.text { max-width: 100%; font-size: 20px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; white-space: pre-wrap; }
+.row.done .text { color: var(--done-ink); text-decoration: line-through; text-decoration-thickness: 2px; }
+.tag { padding: 1px 7px; border-radius: 5px; background: var(--tag-bg); color: var(--tag-ink); font-size: 13px; font-weight: 700; font-style: italic; line-height: 1.4; }
 .row.done .tag { opacity: 0.6; }
 
-.add { display: flex; align-items: center; gap: 1px; padding: 0 16px 0 5px; border-top: 1px solid var(--line); }
+/* the little moment when a task gets crossed off */
+.row.pop .mark { animation: pop 0.32s ease-out; }
+.row.pop .text { animation: strike 0.3s ease-out; }
+@keyframes pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes strike { from { color: var(--ink); text-decoration-color: transparent; } }
+
+.add { display: flex; align-items: center; }
 .plus {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 46px;
+  padding: 0 0 0 2px;
   border: 0;
-  border-radius: 50%;
   background: transparent;
-  color: var(--ring);
+  color: var(--soft);
   display: grid;
-  place-items: center;
+  place-items: center start;
 }
 .plus svg { width: 18px; height: 18px; }
-.add:focus-within .plus { color: var(--today); }
+.add:focus-within .plus { color: var(--ink); }
 .add input {
   flex: 1;
   min-width: 0;
+  padding: 12px 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 17px;
-  padding: 12px 0;
+  font-size: 20px;
+  font-weight: 700;
 }
-.add input::placeholder { color: var(--muted); }
+.add input::placeholder { color: var(--soft); font-style: italic; opacity: 1; }
 
-.hint { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 16px 0; margin: 0; }
+.hint { margin: 0; padding: 22px 16px 0; color: var(--muted); font-size: 15px; font-style: italic; text-align: center; }
 
 .toast {
   position: fixed;
@@ -194,21 +233,22 @@ main {
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 32px);
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 14px;
-  padding: 10px 10px 10px 16px;
+  padding: 11px 10px 11px 18px;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  background: var(--toast-bg);
+  color: var(--toast-ink);
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
   z-index: 30;
-  box-shadow: 0 8px 28px rgba(10, 12, 20, 0.22);
+  box-shadow: 0 8px 28px rgba(40, 25, 5, 0.25);
 }
 .toast span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toast button { flex: none; background: transparent; border: 0; color: var(--toast-action); font-weight: 700; padding: 6px 8px; }
+.toast button { flex: none; padding: 6px 8px; border: 0; background: transparent; color: var(--toast-action); font-weight: 800; }
 
-/* hold a task: move it or delete it */
+/* hold or right-click a task: move it or delete it */
 .sheet-wrap { position: fixed; inset: 0; z-index: 15; display: flex; flex-direction: column; justify-content: flex-end; }
 .scrim { position: absolute; inset: 0; background: var(--scrim); }
 .sheet {
@@ -216,151 +256,150 @@ main {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  background: var(--bg);
-  border-radius: 22px 22px 0 0;
-  box-shadow: 0 -1px 0 var(--line);
   padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--desk);
+  border-radius: 22px 22px 0 0;
   animation: sheet-up 0.18s ease-out;
 }
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
 .sheet-task {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 800;
   overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.sheet-label { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.sheet-label { margin: 4px 0 0; color: var(--muted); font-size: 16px; font-weight: 700; font-style: italic; }
 .sheet-days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dbtn {
-  height: 58px;
+  height: 62px;
   padding: 0 4px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--edge);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--paper);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1px;
 }
-.dbtn-name { font-weight: 600; font-size: 15px; }
-.dbtn-date { color: var(--muted); font-size: 12px; }
-.dbtn:disabled { border-color: var(--today); background: transparent; }
-.dbtn:disabled .dbtn-date { color: var(--today); font-weight: 600; }
+.dbtn-name { font-size: 17px; font-weight: 800; }
+.dbtn-date { color: var(--muted); font-size: 13px; font-style: italic; }
+.dbtn:disabled { border-color: var(--soft); background: transparent; }
+.dbtn:disabled .dbtn-date { font-weight: 700; }
 .sheet-actions { display: flex; gap: 8px; margin-top: 4px; }
 
 .pbtn {
-  height: 46px;
+  height: 48px;
   padding: 0 18px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--edge);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--paper);
   color: var(--ink);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 800;
 }
-.sheet-actions .pbtn { flex: 1; height: 50px; }
-.pbtn-main { background: var(--hi); border-color: var(--hi); color: var(--hi-ink); }
+.sheet-actions .pbtn { flex: 1; height: 52px; }
+.pbtn-main { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .pbtn-danger { color: var(--danger); }
 .pbtn:disabled { opacity: 0.5; }
 
-.foot { text-align: center; padding: 4px 16px 0; }
+.foot { padding: 4px 16px 0; text-align: center; }
 .backup-link {
-  background: none;
-  border: 0;
   padding: 8px 10px;
+  border: 0;
+  background: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 700;
   text-decoration: underline;
-  text-decoration-color: var(--ring);
+  text-decoration-color: var(--soft);
   text-underline-offset: 3px;
 }
-.backup-link.warn { color: var(--danger); font-weight: 600; }
+.backup-link.warn { color: var(--danger); }
 
 .panel {
   position: fixed;
   inset: 0;
   z-index: 20;
   overflow-y: auto;
-  background: var(--bg);
-  padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--desk);
 }
 .panel-inner, .panel-view, .key-form { display: flex; flex-direction: column; gap: 14px; }
-.panel-title { margin: 0; font-family: var(--font-round); font-size: 26px; letter-spacing: -0.01em; }
-.panel-p { margin: 0; color: var(--muted); }
-.steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
-.steps a { color: var(--focus); font-weight: 600; }
-#key-input {
+.panel-title { margin: 0; font-size: 29px; font-weight: 800; letter-spacing: -0.01em; }
+.panel-p { margin: 0; font-size: 18px; line-height: 1.45; }
+.panel-p.quiet { color: var(--muted); }
+.steps { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 10px; font-size: 18px; }
+.steps a { color: var(--focus); font-weight: 700; }
+#key-input, #key-show {
   height: 52px;
   padding: 0 14px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--edge);
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--paper);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 16px;
 }
-#key-input:focus { outline: 0; border-color: var(--focus); }
-.key-msg { margin: 0; min-height: 1.3em; color: var(--muted); font-size: 15px; }
+#key-input:focus, #key-show:focus { outline: 0; border-color: var(--focus); }
+.key-msg { margin: 0; min-height: 1.3em; color: var(--muted); font-size: 16px; font-weight: 700; }
 .key-msg.bad { color: var(--danger); }
 .panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* Mac and other big screens: days side by side, today on the left */
+/* Mac and other big screens */
 @media (min-width: 640px) {
   .page { max-width: 1680px; }
-  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .day-head { flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px 10px; }
-  .day-name { font-size: 19px; }
-  .count { font-size: 13px; }
-  .row { gap: 10px; padding: 10px 14px; }
-  .add { padding: 0 14px 0 2px; }
+  .top, main { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+  .title h1 { font-size: 34px; }
+  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .day { min-height: 200px; }
 
   .sheet-wrap { justify-content: center; padding: 24px; }
   .sheet {
-    max-width: 440px;
+    max-width: 460px;
+    padding: 22px;
     border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 20px 60px rgba(10, 12, 20, 0.28);
+    box-shadow: 0 20px 60px rgba(40, 25, 5, 0.3);
     animation: sheet-pop 0.14s ease-out;
   }
+  .panel-inner { max-width: 680px; }
 }
-@media (min-width: 960px) {
-  main { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* medium windows: today across the top, then two days per row */
+@media (min-width: 640px) and (max-width: 1099px) {
+  .day.today { grid-column: span 2; }
 }
-@media (min-width: 1280px) {
-  main { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .day { min-height: 260px; }
-  .day-head { padding: 12px 12px 10px; }
-  .row { padding: 10px 12px; font-size: 15px; }
-  .mark { width: 20px; height: 20px; }
-  .add { padding: 0 12px 0 0; }
-  .add input { font-size: 16px; }
+/* big windows: four days on top, three wider ones below, filling the window */
+@media (min-width: 1100px) {
+  main { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .day { grid-column: span 3; min-height: max(240px, calc((100dvh - 250px) / 2)); }
+  .day:nth-child(n+5) { grid-column: span 4; }
 }
 @keyframes sheet-pop { from { transform: scale(0.97); opacity: 0; } }
 
 /* mouse and trackpad */
 @media (hover: hover) and (pointer: fine) {
   .row:hover { background: var(--hover); }
-  .row.pressing { background: var(--line); }
-  .plus:hover { color: var(--today); }
-  .dbtn:not(:disabled):hover { border-color: var(--today); }
-  .pbtn:not(:disabled):hover { border-color: var(--ring); }
-  .pbtn-main:not(:disabled):hover { border-color: var(--hi); filter: brightness(1.06); }
+  .row.pressing { background: var(--press); }
+  .plus:hover { color: var(--ink); }
+  .dbtn:not(:disabled):hover { border-color: var(--soft); }
+  .pbtn:not(:disabled):hover { border-color: var(--soft); }
+  .pbtn-main:not(:disabled):hover { border-color: var(--ink); filter: brightness(1.2); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
-  .sheet { animation: none; }
+  .sheet, .row.pop .mark, .row.pop .text { animation: none; }
+  .bar-fill { transition: none; }
 }
 </style>
 </head>
@@ -371,8 +410,8 @@ main {
     <span id="banner-text"></span>
   </div>
   <div class="inner page title">
-    <h1>This week</h1>
-    <span class="range" id="range"></span>
+    <h1 id="today-title">This week</h1>
+    <p class="week-count" id="week-count"></p>
   </div>
 </header>
 
@@ -381,7 +420,7 @@ main {
 <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
 
 <div class="inner page foot">
-  <button class="backup-link" id="backup" type="button">Turn on backup</button>
+  <button class="backup-link" id="backup" type="button">Turn on sync</button>
 </div>
 
 <div class="sheet-wrap" id="sheet" hidden>
@@ -399,12 +438,13 @@ main {
 
 <section class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
   <div class="inner panel-inner">
-    <h2 class="panel-title" id="panel-title">Back up your planner</h2>
+    <h2 class="panel-title" id="panel-title">Sync your planner</h2>
 
     <div class="panel-view" id="panel-setup">
-      <p class="panel-p">Your plans get copied to your private brain-dump-notes repo on GitHub, the same place Brain Dump backs up, in a file called planner.json. Only you can see it. If you still have the key you made for Brain Dump, paste that below. If not, make a new one:</p>
+      <p class="panel-p">Put the same key in the planner on your Mac and on your phone, and both show the same plans. They're saved in a file called planner.json in your private brain-dump-notes repo on GitHub, where Brain Dump saves too. Only you can see it.</p>
+      <p class="panel-p quiet" id="setup-other"></p>
       <ol class="steps">
-        <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+backup&amp;description=Lets+the+Planner+app+back+up+plans&amp;target_name=cqr1os&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
+        <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+sync&amp;description=Lets+the+Planner+app+sync+plans&amp;target_name=cqr1os&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
         <li>Under <b>Repository access</b>, pick <b>Only select repositories</b> and choose <b>brain-dump-notes</b>.</li>
         <li>Under <b>Permissions</b>, set <b>Contents</b> to <b>Read and write</b>.</li>
         <li>Set <b>Expiration</b> to <b>No expiration</b> if it's there, otherwise the longest one. Tap <b>Generate token</b> and copy it.</li>
@@ -422,10 +462,13 @@ main {
 
     <div class="panel-view" id="panel-on" hidden>
       <p class="panel-p" id="panel-status"></p>
+      <p class="panel-p quiet" id="panel-other"></p>
+      <input id="key-show" type="text" readonly aria-label="Your sync key" hidden>
       <div class="panel-actions">
-        <button class="pbtn pbtn-main" id="backup-now" type="button">Back up now</button>
+        <button class="pbtn pbtn-main" id="copy-key" type="button">Copy key</button>
+        <button class="pbtn" id="backup-now" type="button">Sync now</button>
         <button class="pbtn" id="change-key" type="button">Change key</button>
-        <button class="pbtn pbtn-danger" id="backup-off" type="button">Turn off backup</button>
+        <button class="pbtn pbtn-danger" id="backup-off" type="button">Turn off sync</button>
         <button class="pbtn" type="button" data-close>Close</button>
       </div>
     </div>
@@ -442,8 +485,16 @@ main {
   const PLUS_SVG = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 
   const weekEl = document.getElementById("week");
-  const rangeEl = document.getElementById("range");
+  const titleEl = document.getElementById("today-title");
+  const weekCountEl = document.getElementById("week-count");
   const toastEl = document.getElementById("toast");
+
+  // which device this is, for the wording
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isMacSafari = /Macintosh/.test(ua) && navigator.maxTouchPoints <= 1 && /Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const tapWord = finePointer ? "Click" : "Tap";
 
   // ---------- storage ----------
   // Every change is written to two places on the phone (localStorage and IndexedDB).
@@ -556,7 +607,7 @@ main {
     writeChain = writeChain
       .then(() => writeIdb(snapshot))
       .then((okIdb) => {
-        if (!okLocal && !okIdb) showToast("Couldn't save. Your phone might be out of space.");
+        if (!okLocal && !okIdb) showToast("Couldn't save. This device might be out of space.");
       });
   }
 
@@ -642,9 +693,12 @@ main {
     render();
   }
 
+  let popId = null; // the task that was just crossed off gets a little animation
   function toggle(id) {
     const it = items.find((i) => i.id === id);
-    if (it) change(id, { done: !it.done });
+    if (!it) return;
+    popId = it.done ? null : id;
+    change(id, { done: !it.done });
   }
 
   function moveTo(id, k, idx) {
@@ -790,7 +844,7 @@ main {
     cards = keys.map(makeCard);
     for (const c of cards) c.input.value = drafts.get(c.key) || "";
     weekEl.replaceChildren(...cards.map((c) => c.section));
-    rangeEl.textContent = monthDay(keys[0]) + " – " + monthDay(keys[6]);
+    titleEl.textContent = fmt(keys[0], { weekday: "long", month: "long", day: "numeric" });
   }
 
   function makeCard(k, idx) {
@@ -798,8 +852,13 @@ main {
     const head = el("div", "day-head");
     const title = el("h2", "day-title");
     title.append(el("span", "day-name", dayName(k, idx)), el("span", "day-date", dayDate(k, idx)));
-    const count = el("span", "count");
-    head.append(title, count);
+    // fills up as tasks get crossed off
+    const bar = el("div", "bar");
+    bar.setAttribute("role", "progressbar");
+    bar.setAttribute("aria-valuemin", "0");
+    const fill = el("div", "bar-fill");
+    bar.append(fill);
+    head.append(title, bar);
 
     const ul = el("ul", "tasks");
 
@@ -829,12 +888,12 @@ main {
     });
 
     section.append(head, ul, form);
-    return { key: k, section, count, ul, input };
+    return { key: k, section, bar, fill, ul, input };
   }
 
   function rowFor(item) {
     const li = document.createElement("li");
-    const row = el("div", "row" + (item.done ? " done" : ""));
+    const row = el("div", "row" + (item.done ? " done" : "") + (item.id === popId ? " pop" : ""));
     row.tabIndex = 0;
     row.setAttribute("role", "button");
     row.setAttribute("aria-pressed", String(!!item.done));
@@ -859,14 +918,27 @@ main {
       if (!it.deleted && byDay.has(it.day)) byDay.get(it.day).push(it);
     }
 
+    let weekTotal = 0;
+    let weekDone = 0;
     for (const c of cards) {
       const list = byDay.get(c.key).sort((a, b) => a.at - b.at);
       const done = list.filter((i) => i.done).length;
+      weekTotal += list.length;
+      weekDone += done;
       c.ul.replaceChildren(...list.map(rowFor));
       c.ul.hidden = !list.length;
-      c.count.textContent = !list.length ? "" : done === list.length ? "All done" : done + " of " + list.length + " done";
-      c.count.classList.toggle("all", list.length > 0 && done === list.length);
+      c.fill.style.width = list.length ? Math.round((done / list.length) * 100) + "%" : "0%";
+      c.bar.classList.toggle("full", list.length > 0 && done === list.length);
+      c.bar.setAttribute("aria-valuemax", String(list.length));
+      c.bar.setAttribute("aria-valuenow", String(done));
+      c.bar.setAttribute("aria-label", !list.length ? "Nothing planned" : done === list.length ? "All done" : done + " of " + list.length + " done");
     }
+    popId = null;
+    weekCountEl.textContent = !weekTotal
+      ? "Nothing planned yet this week"
+      : weekDone === weekTotal
+        ? "All " + weekTotal + " done this week"
+        : weekDone + " of " + weekTotal + " done this week";
 
     if (focusedId) {
       const again = weekEl.querySelector('[data-id="' + CSS.escape(focusedId) + '"]');
@@ -951,7 +1023,7 @@ main {
 
   function pushRemote(key, list, sha) {
     const body = {
-      message: "Back up planner",
+      message: "Sync planner",
       content: toB64(JSON.stringify({ updated: new Date().toISOString(), items: list }, null, 1) + "\n")
     };
     if (sha) body.sha = sha;
@@ -963,9 +1035,10 @@ main {
     });
   }
 
-  async function runSync() {
+  // quiet = the regular background check, which doesn't flash "Syncing…" every time
+  async function runSync(quiet) {
     const key = backup.key;
-    setBackup({ state: "syncing" });
+    if (!quiet || backup.state !== "ok") setBackup({ state: "syncing" });
     try {
       for (let attempt = 0; attempt < 3; attempt++) {
         const remote = await pullRemote(key);
@@ -991,13 +1064,13 @@ main {
 
   let syncRun = null;
   let syncQueued = false;
-  function syncBackup() {
+  function syncBackup(quiet) {
     if (!backup.key) return Promise.resolve();
     if (syncRun) {
-      syncQueued = true;
+      if (!quiet) syncQueued = true;
       return syncRun;
     }
-    syncRun = runSync().finally(() => {
+    syncRun = runSync(quiet).finally(() => {
       syncRun = null;
       if (syncQueued) {
         syncQueued = false;
@@ -1061,24 +1134,31 @@ main {
     renderBackup();
   }
 
+  const brokenSync = () => backup.state === "bad-key" || backup.state === "no-access";
+
   function backupText() {
-    if (!backup.key) return "Turn on backup";
+    if (!backup.key) return "Turn on sync";
     switch (backup.state) {
-      case "syncing": return "Backing up…";
-      case "offline": return "No connection. It'll back up when you're online.";
-      case "bad-key": return "Backup stopped: GitHub didn't accept your key. Tap to fix.";
-      case "no-access": return "Backup stopped: your key can't reach brain-dump-notes. Tap to fix.";
-      case "error": return "Backup didn't go through. It'll try again.";
-      default: return backup.at ? "Backed up " + whenShort(backup.at) : "Backup is on";
+      case "syncing": return "Syncing…";
+      case "offline": return "No connection. It'll sync when you're online.";
+      case "bad-key": return "Sync stopped: GitHub didn't accept your key.";
+      case "no-access": return "Sync stopped: your key can't reach brain-dump-notes.";
+      case "error": return "Sync didn't go through. It'll try again.";
+      default: return backup.at ? "Synced " + whenShort(backup.at) : "Sync is on";
     }
   }
 
+  // what to do on the other device, worded for whichever one this is
+  const otherSteps = isIOS
+    ? "To see these plans on your Mac too: open the Planner app from your Dock, click Turn on sync at the bottom, and paste this same key."
+    : "To put these plans on your phone: open cqr1os.github.io/planner in Safari on your iPhone, tap Share, then Add to Home Screen. Open Planner from your home screen, tap Turn on sync at the bottom, and paste this same key. Copy it here and paste it on your iPhone; Apple carries copy and paste across your devices.";
+
   function renderBackup() {
-    backupBtn.textContent = backupText();
-    backupBtn.classList.toggle("warn", backup.state === "bad-key" || backup.state === "no-access");
-    panelStatus.textContent = "Backup is on. " +
-      (backup.at ? "Last backup: " + whenShort(backup.at) + ". " : "") +
-      "Your plans are in planner.json in brain-dump-notes on your GitHub, so if this phone ever loses them, paste your key here again and they come back.";
+    backupBtn.textContent = backupText() + (brokenSync() ? " " + tapWord + " to fix." : "");
+    backupBtn.classList.toggle("warn", brokenSync());
+    panelStatus.textContent = "Sync is on. " +
+      (backup.at ? "Last synced " + whenShort(backup.at) + ". " : "") +
+      "Your plans are in planner.json in brain-dump-notes on your GitHub, so if this device ever loses them, paste your key here again and they come back.";
   }
 
   function showSetup(message, bad) {
@@ -1089,13 +1169,14 @@ main {
   }
 
   function openPanel() {
-    const broken = backup.state === "bad-key" || backup.state === "no-access";
     if (!backup.key) showSetup();
-    else if (broken) showSetup(backupText().replace(" Tap to fix.", " Make a new key and paste it here."), true);
+    else if (brokenSync()) showSetup(backupText() + " Make a new key and paste it here.", true);
     else {
       panelSetup.hidden = true;
       panelOn.hidden = false;
     }
+    keyShow.hidden = true;
+    keyShow.value = "";
     panel.hidden = false;
     panel.scrollTop = 0;
   }
@@ -1103,7 +1184,31 @@ main {
   function closePanel() {
     panel.hidden = true;
     keyInput.value = "";
+    keyShow.hidden = true;
+    keyShow.value = "";
   }
+
+  const keyShow = document.getElementById("key-show");
+  document.getElementById("panel-other").textContent = otherSteps;
+  document.getElementById("setup-other").textContent = isIOS
+    ? "Already turned on sync in the Planner on your Mac? Click Synced at the bottom there, click Copy key, and paste it below. If not, make a new key:"
+    : "Already turned on sync in the Planner on your phone? Tap Synced at the bottom there, tap Copy key, and paste it below. If not, make a new key:";
+  if (!isIOS) document.getElementById("copy-key").textContent = "Copy key for your phone";
+
+  document.getElementById("copy-key").addEventListener("click", async () => {
+    if (!backup.key) return;
+    try {
+      await navigator.clipboard.writeText(backup.key);
+      showToast(isIOS ? "Key copied. Paste it in the Planner on your Mac." : "Key copied. Paste it in the Planner on your iPhone.");
+    } catch (e) {
+      // copying was blocked: show the key so it can be selected and copied by hand
+      keyShow.value = backup.key;
+      keyShow.hidden = false;
+      keyShow.focus();
+      keyShow.select();
+      showToast("Select the key and copy it.");
+    }
+  });
 
   backupBtn.addEventListener("click", openPanel);
   panel.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closePanel));
@@ -1122,7 +1227,7 @@ main {
     storeKey(null);
     setBackup({ state: "idle" });
     closePanel();
-    showToast("Backup is off. Your plans are still on this phone.");
+    showToast("Sync is off. Your plans are still here.");
   });
 
   keyForm.addEventListener("submit", async (e) => {
@@ -1143,7 +1248,7 @@ main {
         storeKey(k);
         closePanel();
         await syncBackup();
-        if (backup.state === "ok") showToast("Backup is on");
+        if (backup.state === "ok") showToast("Sync is on");
         else if (backup.state === "no-access") openPanel();
       }
     } catch (err) {
@@ -1156,9 +1261,6 @@ main {
 
   // Safari and the installed app keep separate plans (iPhone home screen and Mac Dock alike),
   // so say so when this isn't the app
-  const ua = navigator.userAgent;
-  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isMacSafari = /Macintosh/.test(ua) && navigator.maxTouchPoints <= 1 && /Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
   const isApp = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
   const bannerText = isIOS
     ? "Plans you add here are kept separate from your Planner app. To put it on your home screen, tap Share, then Add to Home Screen, and open it from the blue icon."
@@ -1166,7 +1268,7 @@ main {
   document.getElementById("banner-text").textContent = bannerText;
   document.getElementById("safari-banner").hidden = isApp || !(isIOS || isMacSafari);
 
-  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+  if (finePointer) {
     document.getElementById("hint").textContent = "Click a task to cross it off. Right-click it to move it or delete it.";
   }
 
@@ -1203,6 +1305,16 @@ main {
   });
   window.addEventListener("online", () => scheduleBackup(0));
   window.addEventListener("pagehide", () => writeLocal(withStored()));
+
+  // While the planner is open, check for changes from the other device every 30 seconds,
+  // and right away when you click back into the window (a Mac window can stay open all day).
+  setInterval(() => {
+    if (document.visibilityState === "visible" && !backupTimer && !brokenSync()) syncBackup(true);
+  }, 30000);
+  window.addEventListener("focus", () => {
+    refresh();
+    if (!backupTimer && !brokenSync()) syncBackup(true);
+  });
 
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
