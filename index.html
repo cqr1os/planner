@@ -168,6 +168,42 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outl
 }
 .board-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .board-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+/* one-time card: paste the same key on the phone and the Mac */
+.connect {
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: var(--paper);
+  border: 2px solid var(--accent);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.connect-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+.connect-p { margin: 6px 0 0; font-size: 17px; line-height: 1.4; }
+.connect-p.quiet { margin-top: 10px; color: var(--muted); font-size: 15px; font-style: italic; }
+.connect-p:empty { display: none; }
+.connect-form { display: flex; gap: 8px; margin-top: 12px; }
+#connect-key {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  padding: 0 14px;
+  border: 1.5px solid var(--edge);
+  border-radius: 12px;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+}
+#connect-key:focus { outline: 0; border-color: var(--accent); }
+#connect-key::placeholder { color: var(--soft); font-family: var(--serif); font-style: italic; font-weight: 700; opacity: 1; }
+.connect-form .pbtn { height: 50px; }
+.connect .key-msg { margin-top: 8px; min-height: 0; }
+.connect .key-msg:empty { display: none; }
+.connect-help { margin-top: 10px; }
+.connect-help summary { cursor: pointer; color: var(--accent); font-size: 16px; font-weight: 800; }
+.connect-help .steps { margin-top: 10px; font-size: 16px; gap: 8px; }
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .say {
   margin-top: 16px;
   padding: 14px 14px 10px 16px;
@@ -576,6 +612,27 @@ main {
         </div>
         <p class="week-count" id="notes-sub">Saved on this device</p>
       </div>
+      <section class="connect" id="connect" aria-labelledby="connect-title" hidden>
+        <h2 class="connect-title" id="connect-title">Connect your phone and Mac</h2>
+        <p class="connect-p" id="connect-lede"></p>
+        <form class="connect-form" id="connect-form" autocomplete="on">
+          <input class="vh" type="text" name="username" autocomplete="username" value="Planner sync" tabindex="-1" aria-hidden="true" readonly>
+          <input id="connect-key" type="password" name="password" autocomplete="current-password" placeholder="Paste your key" aria-label="Your key"
+                 autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+          <button class="pbtn pbtn-main" id="connect-save" type="submit">Connect</button>
+        </form>
+        <p class="key-msg" id="connect-msg" role="status"></p>
+        <p class="connect-p quiet" id="connect-hint"></p>
+        <details class="connect-help">
+          <summary>No key yet? Make one (about a minute)</summary>
+          <ol class="steps">
+            <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+sync&amp;description=Lets+the+Planner+app+share+notes+and+plans&amp;target_name=cqr1os&amp;expires_in=none&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
+            <li>Under <b>Repository access</b>, pick <b>Only select repositories</b> and choose <b>brain-dump-notes</b>.</li>
+            <li>Under <b>Permissions</b>, check that <b>Contents</b> says <b>Read and write</b>.</li>
+            <li>Check that <b>Expiration</b> says <b>No expiration</b>. Click <b>Generate token</b>, copy it, and paste it above.</li>
+          </ol>
+        </details>
+      </section>
       <form class="say" id="say-form" autocomplete="off">
         <textarea id="say" rows="2" maxlength="5000" placeholder="What's on your mind?" aria-label="What's on your mind?" autocapitalize="sentences"></textarea>
         <div class="say-bar">
@@ -602,7 +659,7 @@ main {
 </section>
 
 <div class="inner page foot">
-  <button class="backup-link" id="backup" type="button">Turn on sync</button>
+  <button class="backup-link" id="backup" type="button">Connect your phone and Mac</button>
 </div>
 
 <div class="sheet-wrap" id="sheet" hidden>
@@ -621,13 +678,13 @@ main {
 
 <section class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
   <div class="inner panel-inner">
-    <h2 class="panel-title" id="panel-title">Sync your planner</h2>
+    <h2 class="panel-title" id="panel-title">Your phone and Mac</h2>
 
     <div class="panel-view" id="panel-setup">
       <p class="panel-p">Put the same key in the Planner on your Mac and on your phone, and both show the same notes and plans. They're saved in your private brain-dump-notes repo on GitHub (notes.json and planner.json), where Brain Dump saves too. Only you can see it.</p>
       <p class="panel-p quiet" id="setup-other"></p>
       <ol class="steps">
-        <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+sync&amp;description=Lets+the+Planner+app+sync+plans&amp;target_name=cqr1os&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
+        <li><a href="https://github.com/settings/personal-access-tokens/new?name=Planner+sync&amp;description=Lets+the+Planner+app+share+notes+and+plans&amp;target_name=cqr1os&amp;expires_in=none&amp;contents=write" target="_blank" rel="noopener">Open GitHub's key page</a> and sign in if it asks.</li>
         <li>Under <b>Repository access</b>, pick <b>Only select repositories</b> and choose <b>brain-dump-notes</b>.</li>
         <li>Under <b>Permissions</b>, set <b>Contents</b> to <b>Read and write</b>.</li>
         <li>Set <b>Expiration</b> to <b>No expiration</b> if it's there, otherwise the longest one. Tap <b>Generate token</b> and copy it.</li>
@@ -649,9 +706,8 @@ main {
       <input id="key-show" type="text" readonly aria-label="Your sync key" hidden>
       <div class="panel-actions">
         <button class="pbtn pbtn-main" id="copy-key" type="button">Copy key</button>
-        <button class="pbtn" id="backup-now" type="button">Sync now</button>
+        <button class="pbtn" id="backup-now" type="button">Share now</button>
         <button class="pbtn" id="change-key" type="button">Change key</button>
-        <button class="pbtn pbtn-danger" id="backup-off" type="button">Turn off sync</button>
         <button class="pbtn" type="button" data-close>Close</button>
       </div>
     </div>
@@ -1751,30 +1807,48 @@ main {
 
   const brokenSync = () => backup.state === "bad-key" || backup.state === "no-access";
 
+  // Sharing is always on once a key is in: there's no off switch.
+  const otherDevice = isIOS ? "Mac" : "phone";
+
   function backupText() {
-    if (!backup.key) return "Turn on sync";
+    if (!backup.key) return "Connect your phone and Mac";
     switch (backup.state) {
-      case "syncing": return "Syncing…";
-      case "offline": return "No connection. It'll sync when you're online.";
-      case "bad-key": return "Sync stopped: GitHub didn't accept your key.";
-      case "no-access": return "Sync stopped: your key can't reach brain-dump-notes.";
-      case "error": return "Sync didn't go through. It'll try again.";
-      default: return backup.at ? "Synced " + whenShort(backup.at) : "Sync is on";
+      case "syncing": return "Sharing…";
+      case "offline": return "No connection. It'll share when you're online.";
+      case "bad-key": return "Sharing stopped: GitHub didn't accept your key.";
+      case "no-access": return "Sharing stopped: your key can't reach brain-dump-notes.";
+      case "error": return "Sharing didn't go through. It'll try again.";
+      default: return "Shared with your " + otherDevice + (backup.at ? " · " + whenShort(backup.at) : "");
     }
   }
 
   // what to do on the other device, worded for whichever one this is
   const otherSteps = isIOS
-    ? "To see these notes and plans on your Mac too: open the Planner app from your Dock, click Turn on sync at the bottom, and paste this same key."
-    : "To put these notes and plans on your phone: open cqr1os.github.io/planner in Safari on your iPhone, tap Share, then Add to Home Screen. Open Planner from your home screen, tap Turn on sync at the bottom, and paste this same key. Copy it here and paste it on your iPhone; Apple carries copy and paste across your devices.";
+    ? "To connect your Mac: tap Copy key, then open Planner from your Mac's Dock and paste it into the card at the top of Notes."
+    : "To connect your iPhone: click Copy key for your phone, then open Planner on your iPhone and paste it into the card at the top of Notes. Apple carries copy and paste across your devices.";
+
+  const connectCard = document.getElementById("connect");
+  const connectLede = document.getElementById("connect-lede");
+  const connectForm = document.getElementById("connect-form");
+  const connectInput = document.getElementById("connect-key");
+  const connectMsg = document.getElementById("connect-msg");
+  const connectSave = document.getElementById("connect-save");
+  document.getElementById("connect-hint").textContent = isIOS
+    ? "Already connected your Mac? There, click Shared with your phone at the bottom, then Copy key for your phone, and paste it here."
+    : "Already connected your phone? There, tap Shared with your Mac at the bottom, then Copy key, and paste it here.";
 
   function renderBackup() {
     backupBtn.textContent = backupText() + (brokenSync() ? " " + tapWord + " to fix." : "");
     backupBtn.classList.toggle("warn", brokenSync());
-    panelStatus.textContent = "Sync is on. " +
-      (backup.at ? "Last synced " + whenShort(backup.at) + ". " : "") +
+    panelStatus.textContent = "Sharing is on. " +
+      (backup.at ? "Last shared " + whenShort(backup.at) + ". " : "") +
       "Your plans and notes are in brain-dump-notes on your GitHub, so if this device ever loses them, paste your key here again and they come back.";
-    notesSub.textContent = backup.key && !brokenSync() ? "Saved on this device and online" : "Saved on this device";
+    notesSub.textContent = backup.key && !brokenSync() ? "Saved and shared with your " + otherDevice : "Saved on this device";
+    // the card at the top of Notes stays until this device is connected
+    connectCard.hidden = !!backup.key && !brokenSync();
+    connectLede.textContent = brokenSync()
+      ? backupText() + " Make a new key and paste it here."
+      : "One time only. Paste the same key here and on your " + otherDevice + ", and everything you type shows up on both.";
   }
 
   function showSetup(message, bad) {
@@ -1807,8 +1881,8 @@ main {
   const keyShow = document.getElementById("key-show");
   document.getElementById("panel-other").textContent = otherSteps;
   document.getElementById("setup-other").textContent = isIOS
-    ? "Already turned on sync in the Planner on your Mac? Click Synced at the bottom there, click Copy key, and paste it below. If not, make a new key:"
-    : "Already turned on sync in the Planner on your phone? Tap Synced at the bottom there, tap Copy key, and paste it below. If not, make a new key:";
+    ? "Already connected your Mac? There, click Shared with your phone at the bottom, then Copy key for your phone, and paste it below. If not, make a new key:"
+    : "Already connected your phone? There, tap Shared with your Mac at the bottom, then Copy key, and paste it below. If not, make a new key:";
   if (!isIOS) document.getElementById("copy-key").textContent = "Copy key for your phone";
 
   document.getElementById("copy-key").addEventListener("click", async () => {
@@ -1838,39 +1912,62 @@ main {
     closePanel();
     syncBackup();
   });
-  document.getElementById("backup-off").addEventListener("click", () => {
-    backup.key = null;
-    storeKey(null);
-    setBackup({ state: "idle" });
-    closePanel();
-    showToast("Sync is off. Your plans are still here.");
-  });
+  // Checks a pasted key with GitHub, then saves it and shares right away.
+  // report(message, bad) shows how it's going next to whichever box the key was pasted in.
+  async function connectKey(k, report) {
+    if (!k) {
+      report("Paste your key first.", true);
+      return false;
+    }
+    report("Checking your key…");
+    try {
+      let res = await fetch(API + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
+      // planner.json doesn't exist until the first share, so a 404 there means: check the repo itself
+      if (res.status === 404) res = await fetch(REPO + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
+      if (res.status === 401) {
+        report("GitHub didn't accept that key. Copy it again and paste the whole thing.", true);
+        return false;
+      }
+      if (res.status === 403 || res.status === 404) {
+        report("That key can't open brain-dump-notes. Make a new key and pick brain-dump-notes in step 2.", true);
+        return false;
+      }
+      if (!res.ok) {
+        report("GitHub had a problem. Try again in a minute.", true);
+        return false;
+      }
+    } catch (err) {
+      report("No connection. Try again when you're online.", true);
+      return false;
+    }
+    report("");
+    backup.key = k;
+    storeKey(k);
+    await syncBackup();
+    if (backup.state === "ok") showToast("Connected. What you type now shows on your " + otherDevice + " too.");
+    return true;
+  }
 
   keyForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const k = keyInput.value.trim();
-    if (!k) return showSetup("Paste your key first.", true);
-    showSetup("Checking your key…");
     keySave.disabled = true;
-    try {
-      let res = await fetch(API + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
-      // planner.json doesn't exist until the first backup, so a 404 there means: check the repo itself
-      if (res.status === 404) res = await fetch(REPO + "?t=" + Date.now(), { cache: "no-store", headers: ghHeaders(k) });
-      if (res.status === 401) showSetup("GitHub didn't accept that key. Copy it again and paste the whole thing.", true);
-      else if (res.status === 403 || res.status === 404) showSetup("That key can't open brain-dump-notes. Check steps 2 and 3, then make a new key.", true);
-      else if (!res.ok) showSetup("GitHub had a problem. Try again in a minute.", true);
-      else {
-        backup.key = k;
-        storeKey(k);
-        closePanel();
-        await syncBackup();
-        if (backup.state === "ok") showToast("Sync is on");
-        else if (backup.state === "no-access") openPanel();
-      }
-    } catch (err) {
-      showSetup("No connection. Try again when you're online.", true);
-    }
+    const ok = await connectKey(keyInput.value.trim(), showSetup);
     keySave.disabled = false;
+    if (ok) {
+      closePanel();
+      if (brokenSync()) openPanel();
+    }
+  });
+
+  connectForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    connectSave.disabled = true;
+    const ok = await connectKey(connectInput.value.trim(), (msg, bad) => {
+      connectMsg.textContent = msg || "";
+      connectMsg.classList.toggle("bad", !!bad);
+    });
+    connectSave.disabled = false;
+    if (ok) connectInput.value = "";
   });
 
   // ---------- boot ----------
@@ -1947,7 +2044,7 @@ main {
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value || !!sayEl.value || !!rec;
+    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
