@@ -1959,6 +1959,21 @@ main {
       if (document.visibilityState === "hidden" && reloadWhenHidden) location.reload();
     });
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+
+    // The iPhone (and a Mac window left open) keeps the app paused instead of starting it over,
+    // so look for a new version every time you come back to it, and every half hour while it's open.
+    let lastCheck = Date.now();
+    const checkForUpdate = () => {
+      if (Date.now() - lastCheck < 60000) return;
+      lastCheck = Date.now();
+      navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
+    };
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") checkForUpdate();
+    });
+    window.addEventListener("focus", checkForUpdate);
+    window.addEventListener("pageshow", checkForUpdate);
+    setInterval(checkForUpdate, 30 * 60000);
   }
 })();
 </script>
