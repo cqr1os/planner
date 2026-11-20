@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Planner">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f3e6cc" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1c1915" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -44,29 +44,36 @@
   --warn-ink: #5a4300;
   --warn-line: #f0d27a;
   --shadow: 0 1px 3px rgba(80, 50, 10, 0.08), 0 0 0 1px var(--edge);
+  --accent: #ba7517;
+  --today-name-bg: var(--hl);
+  --today-name-ink: var(--hl-ink);
   --serif: ui-serif, "New York", Georgia, "Times New Roman", serif;
   color-scheme: light;
 }
+/* dark: near-black desk, cards a clear step lighter, cream writing, one gold */
 @media (prefers-color-scheme: dark) {
   :root {
-    --desk: #1c1915;
-    --paper: #2e2820;
-    --ink: #faeeda;
-    --muted: #f0c27a;
-    --soft: #c98a2e;
-    --rule: #443b2d;
-    --edge: #3a3226;
-    --hl: #8a5410;
-    --hl-ink: #fff6e6;
-    --press: #3d3529;
-    --hover: #352e25;
-    --done-ink: #9c8562;
-    --bar-bg: #41392b;
-    --bar: #ef9f27;
+    --desk: #16130f;
+    --paper: #221d17;
+    --ink: #f3e9d6;
+    --muted: #cdb48a;
+    --soft: #a88a58;
+    --rule: #322a21;
+    --edge: #2c251d;
+    --hl: #e0a84a;
+    --hl-ink: #16130f;
+    --press: #312a21;
+    --hover: #29231b;
+    --done-ink: #8a7d68;
+    --bar-bg: #3a3229;
+    --bar: #e0a84a;
     --bar-full: #97c459;
-    --tag-bg: #46371f;
-    --tag-ink: #fac775;
-    --check-ink: #2e2820;
+    --tag-bg: #3d2f17;
+    --tag-ink: #f0c46e;
+    --check-ink: #16130f;
+    --accent: #e0a84a;
+    --today-name-bg: transparent;
+    --today-name-ink: #e0a84a;
     --danger: #f09595;
     --focus: #85b7eb;
     --toast-bg: #faeeda;
@@ -151,6 +158,16 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outl
 
 /* the Notes page: one wide column of paper */
 .notes-col { max-width: 760px; margin: 0 auto; }
+.notes-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.board-link {
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.board-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.board-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .say {
   margin-top: 16px;
   padding: 14px 14px 10px 16px;
@@ -206,7 +223,7 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outl
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
-.note-day.today .note-day-name { background: var(--hl); color: var(--hl-ink); }
+.note-day.today .note-day-name { background: var(--today-name-bg); color: var(--today-name-ink); }
 .note-day .tasks li:last-child { border-bottom: 0; }
 .note-time {
   flex: none;
@@ -250,7 +267,8 @@ main {
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
-.today .day-name { background: var(--hl); color: var(--hl-ink); }
+.today .day-name { background: var(--today-name-bg); color: var(--today-name-ink); }
+.day.today { box-shadow: 0 0 0 2px var(--accent); }
 .day-date { color: var(--muted); font-size: 16px; font-style: italic; }
 .bar { height: 5px; margin: 10px 0 2px; border-radius: 3px; background: var(--bar-bg); overflow: hidden; }
 .bar-fill { width: 0; height: 100%; border-radius: 3px; background: var(--bar); transition: width 0.35s ease; }
@@ -258,13 +276,15 @@ main {
 
 /* each task sits on its own ruled line */
 .tasks { list-style: none; margin: 0; padding: 0; }
-.tasks li { border-bottom: 1.5px solid var(--rule); }
+.tasks li { display: flex; align-items: flex-start; border-bottom: 1px solid var(--rule); }
 .row {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin: 0 -6px;
-  padding: 11px 6px;
+  margin: 0 0 0 -6px;
+  padding: 12px 6px;
   border-radius: 8px;
   cursor: pointer;
   -webkit-user-select: none;
@@ -290,7 +310,26 @@ main {
 .text { max-width: 100%; font-size: 20px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; white-space: pre-wrap; }
 .row.done .text { color: var(--done-ink); text-decoration: line-through; text-decoration-thickness: 2px; }
 .tag { padding: 1px 7px; border-radius: 5px; background: var(--tag-bg); color: var(--tag-ink); font-size: 13px; font-weight: 700; font-style: italic; line-height: 1.4; }
+.tag.cozy { font-style: normal; font-weight: 800; }
 .row.done .tag { opacity: 0.6; }
+
+/* delete: always there (faint) on the phone, shows up under the mouse on a Mac */
+.trash {
+  flex: none;
+  width: 40px;
+  height: 50px;
+  margin-right: -8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--soft);
+  opacity: 0.55;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.trash svg { width: 20px; height: 20px; }
+.trash:active { color: var(--danger); opacity: 1; }
 
 /* the little moment when a task gets crossed off */
 .row.pop .mark { animation: pop 0.32s ease-out; }
@@ -298,11 +337,11 @@ main {
 @keyframes pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @keyframes strike { from { color: var(--ink); text-decoration-color: transparent; } }
 
-.add { display: flex; align-items: center; }
+.add { display: flex; align-items: flex-start; }
 .plus {
   flex: none;
   width: 34px;
-  height: 46px;
+  height: 50px;
   padding: 0 0 0 2px;
   border: 0;
   background: transparent;
@@ -311,20 +350,26 @@ main {
   place-items: center start;
 }
 .plus svg { width: 18px; height: 18px; }
-.add:focus-within .plus { color: var(--ink); }
-.add input {
+.add:focus-within .plus { color: var(--accent); }
+/* a long task wraps onto more lines as you type, never scrolls sideways */
+.add textarea {
   flex: 1;
   min-width: 0;
+  display: block;
+  height: 50px;
   padding: 12px 0;
   border: 0;
   outline: 0;
+  resize: none;
+  overflow: hidden;
   background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: 20px;
   font-weight: 700;
+  line-height: 1.3;
 }
-.add input::placeholder { color: var(--soft); font-style: italic; opacity: 1; }
+.add textarea::placeholder { color: var(--soft); font-style: italic; opacity: 1; }
 
 .hint { margin: 0; padding: 22px 16px 0; color: var(--muted); font-size: 15px; font-style: italic; text-align: center; }
 
@@ -408,6 +453,7 @@ main {
   font-weight: 800;
 }
 .sheet-actions .pbtn { flex: 1; height: 52px; }
+.sheet-cozy { height: 52px; margin-top: 4px; color: var(--accent); }
 .pbtn-main { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .pbtn-danger { color: var(--danger); }
 .pbtn:disabled { opacity: 0.5; }
@@ -480,11 +526,11 @@ main {
 @media (min-width: 640px) and (max-width: 1099px) {
   .day.today { grid-column: span 2; }
 }
-/* big windows: four days on top, three wider ones below, filling the window */
+/* big windows: today across the top so long tasks stay on a line or two, then three days per row */
 @media (min-width: 1100px) {
-  main { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .day { grid-column: span 3; min-height: max(240px, calc((100dvh - 320px) / 2)); }
-  .day:nth-child(n+5) { grid-column: span 4; }
+  main { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .day { min-height: 190px; }
+  .day.today { grid-column: 1 / -1; min-height: 0; padding: 16px 22px 6px; }
 }
 @keyframes sheet-pop { from { transform: scale(0.97); opacity: 0; } }
 
@@ -492,7 +538,10 @@ main {
 @media (hover: hover) and (pointer: fine) {
   .row:hover { background: var(--hover); }
   .row.pressing { background: var(--press); }
-  .plus:hover { color: var(--ink); }
+  .plus:hover { color: var(--accent); }
+  .trash { opacity: 0; transition: opacity 0.12s ease; }
+  .tasks li:hover .trash, .trash:focus-visible { opacity: 1; }
+  .trash:hover { color: var(--danger); background: var(--hover); }
   .dbtn:not(:disabled):hover { border-color: var(--soft); }
   .pbtn:not(:disabled):hover { border-color: var(--soft); }
   .pbtn-main:not(:disabled):hover { border-color: var(--ink); filter: brightness(1.2); }
@@ -521,7 +570,10 @@ main {
   <div class="side">
     <div class="notes-col">
       <div class="title">
-        <h1>Notes</h1>
+        <div class="notes-head">
+          <h1>Notes</h1>
+          <a class="board-link" id="board-link" href="https://claude.ai/artifact/CErBdFK9BuNzCUMb5Mo6EK" target="_blank" rel="noopener">Open ideas board <span aria-hidden="true">↗</span></a>
+        </div>
         <p class="week-count" id="notes-sub">Saved on this device</p>
       </div>
       <form class="say" id="say-form" autocomplete="off">
@@ -533,7 +585,7 @@ main {
         </div>
       </form>
       <div class="notes-list" id="notes-list"></div>
-      <p class="hint" id="notes-hint">Tap a note to cross it out. Hold it to put it on a day or delete it.</p>
+      <p class="hint" id="notes-hint">Tap a note to cross it out. Hold it to put it on a day or mark it as a Cozy idea.</p>
     </div>
   </div>
 </section>
@@ -546,7 +598,7 @@ main {
     </div>
   </div>
   <main class="inner page" id="week"></main>
-  <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it or delete it.</p>
+  <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it to another day.</p>
 </section>
 
 <div class="inner page foot">
@@ -559,6 +611,7 @@ main {
     <p class="sheet-task" id="sheet-task"></p>
     <p class="sheet-label" id="sheet-label">Move to</p>
     <div class="sheet-days" id="sheet-days"></div>
+    <button class="pbtn sheet-cozy" id="sheet-cozy" type="button" hidden>Mark as a Cozy idea</button>
     <div class="sheet-actions">
       <button class="pbtn pbtn-danger" id="sheet-delete" type="button">Delete</button>
       <button class="pbtn" id="sheet-cancel" type="button">Cancel</button>
@@ -613,6 +666,7 @@ main {
   const DAY = 864e5;
   const CHECK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3l2.3 2.2L9.6 3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const PLUS_SVG = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  const TRASH_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   const weekEl = document.getElementById("week");
   const titleEl = document.getElementById("today-title");
@@ -845,14 +899,21 @@ main {
   // ---------- actions ----------
 
   function addTask(k, input) {
-    const text = input.value.trim().slice(0, 300);
+    const text = input.value.trim().slice(0, 1000);
     if (!text) return false;
     const now = Date.now();
     items = items.concat({ id: newId(), text, day: k, at: now, updated: now, done: false });
     save();
     input.value = "";
+    growBox(input);
     render();
     return true;
+  }
+
+  // the add box gets taller as the task gets longer
+  function growBox(box) {
+    box.style.height = "";
+    if (box.value) box.style.height = box.scrollHeight + "px";
   }
 
   function change(id, fields) {
@@ -917,6 +978,21 @@ main {
     closeSheet();
     changeNote(id, { deleted: true });
     showToast("Note deleted", { label: "Undo", onClick: () => changeNote(id, { deleted: false }) });
+  }
+
+  // A note about the product gets a "Cozy idea" tag, and Claude files tagged notes onto the
+  // Cozy Ideas Board every night. Holding a note can tag or untag it by hand (note.cozy).
+  // Keep this word list the same as COZY_WORDS in organic ripping/ideas/_planner_notes.py.
+  const COZY_WORDS = /\b(products?|prods?|cozy|cozycrab|crabs?)\b/i;
+  const isCozy = (n) => (typeof n.cozy === "boolean" ? n.cozy : COZY_WORDS.test(n.text));
+
+  function toggleCozy(id) {
+    const n = notes.find((x) => x.id === id);
+    if (!n) return;
+    const was = isCozy(n);
+    closeSheet();
+    changeNote(id, { cozy: !was });
+    showToast(was ? "Not a Cozy idea anymore" : "Marked as a Cozy idea", { label: "Undo", onClick: () => changeNote(id, { cozy: was }) });
   }
 
   // a thought becomes a task on one of the next seven days; the note stays where it is
@@ -986,6 +1062,7 @@ main {
   const sheetTask = document.getElementById("sheet-task");
   const sheetDays = document.getElementById("sheet-days");
   const sheetLabel = document.getElementById("sheet-label");
+  const sheetCozy = document.getElementById("sheet-cozy");
   let sheetId = null;
   let sheetArmed = false;
   let sheetReturn = null;
@@ -1016,6 +1093,8 @@ main {
     if (byPress) armOnLift();
     sheetTask.textContent = it.text;
     sheetLabel.textContent = isNote ? "Put on a day" : "Move to";
+    sheetCozy.hidden = !isNote;
+    if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
     sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
       const b = el("button", "dbtn");
       b.type = "button";
@@ -1043,6 +1122,7 @@ main {
   document.getElementById("scrim").addEventListener("click", sheetTap(closeSheet));
   document.getElementById("sheet-cancel").addEventListener("click", sheetTap(closeSheet));
   document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => (sheetKind === "note" ? removeNote(sheetId) : remove(sheetId))));
+  sheetCozy.addEventListener("click", sheetTap(() => toggleCozy(sheetId)));
 
   // ---------- rendering ----------
 
@@ -1065,6 +1145,7 @@ main {
     const drafts = new Map(cards.map((c) => [c.key, c.input.value]));
     cards = keys.map(makeCard);
     for (const c of cards) c.input.value = drafts.get(c.key) || "";
+    requestAnimationFrame(() => cards.forEach((c) => growBox(c.input)));
     weekEl.replaceChildren(...cards.map((c) => c.section));
     titleEl.textContent = fmt(keys[0], { weekday: "long", month: "long", day: "numeric" });
   }
@@ -1090,9 +1171,9 @@ main {
     plus.type = "button";
     plus.innerHTML = PLUS_SVG;
     plus.setAttribute("aria-label", "Add to " + dayName(k, idx));
-    const input = el("input");
-    input.type = "text";
-    input.maxLength = 300;
+    const input = el("textarea");
+    input.rows = 1;
+    input.maxLength = 1000;
     input.placeholder = "Add a task";
     input.setAttribute("aria-label", "Add a task for " + dayName(k, idx));
     input.setAttribute("enterkeyhint", "enter");
@@ -1100,6 +1181,12 @@ main {
     form.append(plus, input);
 
     // return adds the task and keeps the keyboard up for the next one; return on an empty box puts it away
+    input.addEventListener("input", () => growBox(input));
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+      e.preventDefault();
+      if (!addTask(k, input)) input.blur();
+    });
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       if (!addTask(k, input)) input.blur();
@@ -1127,8 +1214,22 @@ main {
     if (item.from && item.from < item.day) body.append(el("span", "tag", fromLabel(item)));
     row.append(mark, body);
     attachPress(row, item.id, () => toggle(item.id), (byPress) => openSheet(item.id, byPress));
-    li.append(row);
+    li.append(row, trashFor("Delete " + item.text, () => remove(item.id)));
     return li;
+  }
+
+  // the trash can at the end of every task and note
+  function trashFor(label, onClick) {
+    const b = el("button", "trash");
+    b.type = "button";
+    b.innerHTML = TRASH_SVG;
+    b.setAttribute("aria-label", label.length > 60 ? label.slice(0, 60) + "…" : label);
+    b.title = "Delete";
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+    return b;
   }
 
   function render() {
@@ -1198,9 +1299,10 @@ main {
     const time = el("span", "note-time", clock(n.at));
     const body = el("span", "body");
     body.append(el("span", "text", n.text));
+    if (isCozy(n)) body.append(el("span", "tag cozy", "Cozy idea"));
     row.append(time, body);
     attachPress(row, n.id, () => toggleNote(n.id), (byPress) => openSheet(n.id, byPress, "note"));
-    li.append(row);
+    li.append(row, trashFor("Delete note: " + n.text, () => removeNote(n.id)));
     return li;
   }
 
@@ -1783,8 +1885,8 @@ main {
   document.getElementById("safari-banner").hidden = isApp || !(isIOS || isMacSafari);
 
   if (finePointer) {
-    document.getElementById("hint").textContent = "Click a task to cross it off. Right-click it to move it or delete it.";
-    document.getElementById("notes-hint").textContent = "Click a note to cross it out. Right-click it to put it on a day or delete it.";
+    document.getElementById("hint").textContent = "Click a task to cross it off. Right-click it to move it to another day.";
+    document.getElementById("notes-hint").textContent = "Click a note to cross it out. Right-click it to put it on a day or mark it as a Cozy idea. Cozy ideas go on your ideas board every night.";
   }
 
   // at midnight the week shifts by a day and leftovers roll onto the new today
