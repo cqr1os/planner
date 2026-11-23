@@ -483,11 +483,20 @@ main {
   font-size: 21px;
   font-weight: 800;
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: none;
 }
+.sheet { max-height: 92dvh; overflow-y: auto; }
+.sheet-edit {
+  width: 100%; resize: none; min-height: 52px; max-height: 40dvh; overflow-y: auto;
+  padding: 10px 12px; border: 1.5px solid var(--edge); border-radius: 12px;
+  background: var(--paper); color: var(--ink); font: inherit; font-size: 20px; font-weight: 800; line-height: 1.35;
+}
+.sheet-edit:focus { outline: 0; border-color: var(--accent); }
+.sheet-edit-hint { margin: -6px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }
+.sheet-pics { display: flex; gap: 8px; flex-wrap: wrap; }
+.sheet-pics:empty { display: none; }
+.sheet-pic-add { height: 52px; }
+
 .sheet-label { margin: 4px 0 0; color: var(--muted); font-size: 16px; font-weight: 700; font-style: italic; }
 .sheet-days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dbtn {
@@ -702,6 +711,11 @@ main {
   <div class="scrim" id="scrim"></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-task">
     <p class="sheet-task" id="sheet-task"></p>
+    <textarea class="sheet-edit" id="sheet-edit" rows="2" maxlength="5000" aria-label="Edit the words"></textarea>
+    <p class="sheet-edit-hint">Fix the words above. They save when you close this.</p>
+    <div class="sheet-pics" id="sheet-pics"></div>
+    <button class="pbtn sheet-pic-add" id="sheet-pic-add" type="button">Add a picture</button>
+    <input type="file" id="sheet-pic-input" accept="image/*" multiple hidden>
     <p class="sheet-label" id="sheet-label">Move to</p>
     <div class="sheet-days" id="sheet-days"></div>
     <button class="pbtn sheet-cozy" id="sheet-cozy" type="button" hidden>Mark as a Cozy idea</button>
@@ -1313,6 +1327,10 @@ main {
     sheetArmed = !byPress;
     if (byPress) armOnLift();
     sheetTask.textContent = it.text || "Picture";
+    sheetEdit.value = it.text || "";
+    sheetOrig = it.text || "";
+    renderSheetPics(it);
+    requestAnimationFrame(growSheetEdit);
     sheetLabel.textContent = isNote ? "Put on a day" : "Move to";
     sheetCozy.hidden = !isNote;
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
@@ -1331,8 +1349,86 @@ main {
     if (!byPress) document.getElementById("sheet-cancel").focus();
   }
 
+  const sheetEdit = document.getElementById("sheet-edit");
+  let sheetOrig = "";
+  function growSheetEdit() {
+    sheetEdit.style.height = "auto";
+    sheetEdit.style.height = sheetEdit.scrollHeight + 4 + "px";
+  }
+  sheetEdit.addEventListener("input", growSheetEdit);
+  sheetEdit.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { sheetEdit.value = sheetOrig; }
+  });
+  // save any new wording when the menu closes
+  function commitEdit() {
+    const id = sheetId;
+    const kind = sheetKind;
+    const text = sheetEdit.value.trim().slice(0, kind === "note" ? 5000 : 1000);
+    const before = sheetOrig;
+    if (!id || text === before.trim()) return;
+    const list = kind === "note" ? notes : items;
+    const it = list.find((x) => x.id === id);
+    if (!it) return;
+    if (!text && !(it.imgs && it.imgs.length)) return; // never blank out a note by accident
+    const apply = (t) => (kind === "note" ? changeNote(id, { text: t }) : change(id, { text: t }));
+    setTimeout(() => {
+      apply(text);
+      showToast("Saved your changes", { label: "Undo", onClick: () => apply(before) });
+    });
+  }
+  function sheetItem() {
+    return (sheetKind === "note" ? notes : items).find((x) => x.id === sheetId);
+  }
+  function setItemPics(id, kind, imgs) {
+    if (kind === "note") changeNote(id, { imgs });
+    else change(id, { imgs });
+  }
+  function renderSheetPics(it) {
+    const box = document.getElementById("sheet-pics");
+    const ids = (it && it.imgs) || [];
+    box.replaceChildren(...ids.map((pid) => {
+      const d = el("div", "say-pic");
+      const im = el("img");
+      im.alt = "Picture";
+      loadPic(pid).then((x) => { if (x) im.src = x; });
+      const x = el("button", null, "×");
+      x.type = "button";
+      x.setAttribute("aria-label", "Remove picture");
+      x.addEventListener("click", () => {
+        const id = sheetId, kind = sheetKind;
+        const cur = sheetItem();
+        if (!cur) return;
+        setItemPics(id, kind, (cur.imgs || []).filter((q) => q !== pid));
+        renderSheetPics(sheetItem());
+      });
+      d.append(im, x);
+      return d;
+    }));
+  }
+  const sheetPicInput = document.getElementById("sheet-pic-input");
+  document.getElementById("sheet-pic-add").addEventListener("click", sheetTap(() => sheetPicInput.click()));
+  sheetPicInput.addEventListener("change", async () => {
+    const id = sheetId, kind = sheetKind;
+    const files = [...sheetPicInput.files].filter((f) => f.type.startsWith("image/"));
+    sheetPicInput.value = "";
+    const added = [];
+    for (const f of files) {
+      const data = await shrink(f);
+      if (!data) continue;
+      const pid = newId();
+      storePic(pid, data, true);
+      added.push(pid);
+    }
+    const cur = (kind === "note" ? notes : items).find((x) => x.id === id);
+    if (!cur || !added.length) return;
+    setItemPics(id, kind, (cur.imgs || []).concat(added));
+    if (sheetId === id) renderSheetPics(sheetItem());
+    else showToast(added.length > 1 ? "Pictures added" : "Picture added");
+  });
+
   function closeSheet() {
     if (sheet.hidden) return;
+    commitEdit();
     sheet.hidden = true;
     sheetId = null;
     document.body.classList.remove("locked");
@@ -1437,7 +1533,8 @@ main {
     const mark = el("span", "mark");
     mark.innerHTML = CHECK_SVG;
     const body = el("span", "body");
-    body.append(el("span", "text", item.text));
+    if (item.text) body.append(el("span", "text", item.text));
+    if (Array.isArray(item.imgs) && item.imgs.length) body.append(picsFor(item.imgs));
     if (item.from && item.from < item.day) body.append(el("span", "tag", fromLabel(item)));
     row.append(mark, body);
     attachPress(row, item.id, () => toggle(item.id), (byPress) => openSheet(item.id, byPress));
@@ -2332,7 +2429,7 @@ main {
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => pendingPics.length > 0 || cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
+    const typing = () => pendingPics.length > 0 || !sheet.hidden || cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
