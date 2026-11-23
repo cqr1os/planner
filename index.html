@@ -8,8 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Planner">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f3e6cc" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f2f1ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#f2f1ee" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -638,6 +638,50 @@ main {
   .sheet, .row.pop .mark, .row.pop .text, .pg, .mic.on { animation: none !important; }
   .bar-fill { transition: none; }
 }
+
+/* ===== Style B: clean soft (light, Apple-Reminders feel) ===== */
+:root, :root:not(#x) {
+  --desk: #f2f1ee; --paper: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --soft: #c7c7cc;
+  --rule: #ececee; --edge: #e5e5ea; --hl: #e8f0ff; --hl-ink: #0c447c; --press: #f0f0f2; --hover: #f7f7f9;
+  --done-ink: #aeaeb2; --bar-bg: #e9e9ee; --bar: #378add; --bar-full: #34a853;
+  --tag-bg: #eef3fb; --tag-ink: #0c447c; --check-ink: #ffffff; --accent: #378add;
+  --today-name-bg: transparent; --today-name-ink: #1d1d1f; --danger: #d93025; --focus: #378add;
+  --toast-bg: #1d1d1f; --toast-ink: #ffffff; --toast-action: #85b7eb; --scrim: rgba(0,0,0,0.25);
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px #ececee;
+  --serif: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
+.text, .check, .day-name, .title h1, .note-day-name, .connect-title, .sheet-edit { font-weight: 600; letter-spacing: -0.01em; }
+.text { font-size: 18px; }
+.week-count, .day-date, .note-time, .say-status, .hint, .tag, .sheet-label, .past-empty, .connect-p.quiet, .sheet-edit-hint { font-style: normal !important; }
+.day, .note-day, .connect { border-radius: 20px; box-shadow: var(--shadow); }
+.day { padding: 18px 18px 8px; }
+.day.today { box-shadow: 0 0 0 2px var(--accent); }
+.today .day-name { color: var(--ink); background: transparent; }
+.day-count { color: var(--accent); }
+.day.today .day-count { display: inline-block; background: #e8f0ff; color: #0c447c; border-radius: 999px; padding: 3px 12px; font-size: 14px; font-weight: 600; align-self: flex-start; }
+.day.today .day-count b { font-size: 14px; }
+.mark, .check .box { border-radius: 50%; border: 2px solid var(--soft); width: 22px; height: 22px; }
+.row.done .mark { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tasks li { border-bottom: 1px solid var(--rule); }
+.tag { border-radius: 999px; padding: 2px 10px; font-weight: 600; }
+.tag.cozy { background: #fdf1dc; color: #854f0b; }
+.switch { background: #e5e5ea; border-radius: 12px; }
+.switch-btn[aria-selected="true"] { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.say { background: #fff; border-radius: 18px; border-color: var(--edge); }
+.say:focus-within { border-color: var(--accent); }
+.mic { background: #f2f1ee; color: var(--ink); }
+.mic.on { color: #fff; }
+.pbtn { border-radius: 12px; }
+.pbtn-main { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sheet { background: #f2f1ee; }
+.dbtn { background: #fff; }
+.leftover { background: #e8f0ff; color: #0c447c; }
+.leftover .x { color: #0c447c; }
+.day.empty:not(.today) { background: rgba(255,255,255,0.5); box-shadow: inset 0 0 0 1px var(--edge); }
+.past-btn { background: #fff; }
+.board-link { color: var(--accent); }
 </style>
 </head>
 <body>
