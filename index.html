@@ -682,6 +682,11 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
 .day.empty:not(.today) { background: rgba(255,255,255,0.5); box-shadow: inset 0 0 0 1px var(--edge); }
 .past-btn { background: #fff; }
 .board-link { color: var(--accent); }
+.lev { margin-top: 10px; }
+.lev-label { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; padding: 2px 0 4px; }
+.lev-hi .lev-label { color: #185fa5; }
+.lev-lo .lev-label { color: #8e8e93; }
+.lev-lo { border-top: 1px dashed var(--edge); padding-top: 8px; }
 </style>
 </head>
 <body>
@@ -773,6 +778,7 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     <input type="file" id="sheet-pic-input" accept="image/*" multiple hidden>
     <p class="sheet-label" id="sheet-label">Move to</p>
     <div class="sheet-days" id="sheet-days"></div>
+    <button class="pbtn sheet-cozy" id="sheet-lev" type="button" hidden>Make high leverage</button>
     <button class="pbtn sheet-cozy" id="sheet-check" type="button" hidden>Make it a checklist</button>
     <button class="pbtn sheet-cozy" id="sheet-cozy" type="button" hidden>Mark as a Cozy idea</button>
     <div class="sheet-actions">
@@ -1073,11 +1079,11 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
 
   // ---------- actions ----------
 
-  function addTask(k, input) {
+  function addTask(k, input, hi) {
     const text = input.value.trim().slice(0, 1000);
     if (!text) return false;
     const now = Date.now();
-    items = items.concat({ id: newId(), text, day: k, at: now, updated: now, done: false });
+    items = items.concat({ id: newId(), text, day: k, at: now, updated: now, done: false, hi: !!hi });
     save();
     input.value = "";
     growBox(input);
@@ -1371,6 +1377,7 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
   const sheetLabel = document.getElementById("sheet-label");
   const sheetCozy = document.getElementById("sheet-cozy");
   const sheetCheck = document.getElementById("sheet-check");
+  const sheetLev = document.getElementById("sheet-lev");
   let sheetId = null;
   let sheetArmed = false;
   let sheetReturn = null;
@@ -1408,6 +1415,8 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     sheetLabel.hidden = isNote;
     sheetDays.hidden = isNote;
     sheetCozy.hidden = !isNote;
+    sheetLev.hidden = isNote;
+    if (!isNote) sheetLev.textContent = it.hi ? "Make low leverage" : "Make high leverage";
     sheetCheck.hidden = true;
     if (isNote) sheetCheck.textContent = it.check ? "Make it a normal note" : "Make it a checklist";
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
@@ -1517,6 +1526,17 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
   document.getElementById("sheet-cancel").addEventListener("click", sheetTap(closeSheet));
   document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => (sheetKind === "note" ? removeNote(sheetId) : remove(sheetId))));
   sheetCozy.addEventListener("click", sheetTap(() => toggleCozy(sheetId)));
+  sheetLev.addEventListener("click", sheetTap(() => {
+    const id = sheetId;
+    const it = items.find((x) => x.id === id);
+    if (!it) return;
+    closeSheet();
+    const was = !!it.hi;
+    setTimeout(() => {
+      change(id, { hi: !was });
+      showToast(was ? "Moved to low leverage" : "Moved to high leverage", { label: "Undo", onClick: () => change(id, { hi: was }) });
+    }, 0);
+  }));
   sheetCheck.addEventListener("click", sheetTap(() => {
     const id = sheetId;
     const n = notes.find((x) => x.id === id);
@@ -1547,10 +1567,10 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     const keys = weekKeys();
     if (keys.join() === shownWeek) return;
     shownWeek = keys.join();
-    const drafts = new Map(cards.map((c) => [c.key, c.input.value]));
+    const drafts = new Map(cards.map((c) => [c.key, c.inputs.map((i) => i.value)]));
     cards = keys.map(makeCard);
-    for (const c of cards) c.input.value = drafts.get(c.key) || "";
-    requestAnimationFrame(() => cards.forEach((c) => growBox(c.input)));
+    for (const c of cards) (drafts.get(c.key) || []).forEach((v, n) => { c.inputs[n].value = v || ""; });
+    requestAnimationFrame(() => cards.forEach((c) => c.inputs.forEach(growBox)));
     weekEl.replaceChildren(...cards.map((c) => c.section));
     titleEl.textContent = fmt(keys[0], { weekday: "long", month: "long", day: "numeric" });
   }
@@ -1574,41 +1594,47 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     head.append(title, count, bar);
     if (left) head.append(left);
 
-    const ul = el("ul", "tasks");
+    const hiPart = makePart(k, idx, true);
+    const loPart = makePart(k, idx, false);
+    section.append(head, hiPart.wrap, loPart.wrap);
+    return { key: k, section, bar, fill, count, left, hi: hiPart, lo: loPart, inputs: [hiPart.input, loPart.input] };
+  }
 
+  // one part of a day: High leverage or Low leverage, each with its own list and add box
+  function makePart(k, idx, hi) {
+    const wrap = el("div", "lev " + (hi ? "lev-hi" : "lev-lo"));
+    const label = el("div", "lev-label", hi ? "High leverage" : "Low leverage");
+    const ul = el("ul", "tasks");
     const form = el("form", "add");
     form.setAttribute("autocomplete", "off");
     const plus = el("button", "plus");
     plus.type = "button";
     plus.innerHTML = PLUS_SVG;
-    plus.setAttribute("aria-label", "Add to " + dayName(k, idx));
+    plus.setAttribute("aria-label", "Add to " + dayName(k, idx) + (hi ? ", high leverage" : ", low leverage"));
     const input = el("textarea");
     input.rows = 1;
     input.maxLength = 1000;
-    input.placeholder = "Add a task";
-    input.setAttribute("aria-label", "Add a task for " + dayName(k, idx));
+    input.placeholder = hi ? "Add a high leverage task" : "Add a low leverage task";
+    input.setAttribute("aria-label", input.placeholder + " for " + dayName(k, idx));
     input.setAttribute("enterkeyhint", "enter");
     input.setAttribute("autocapitalize", "sentences");
     form.append(plus, input);
-
-    // return adds the task and keeps the keyboard up for the next one; return on an empty box puts it away
     input.addEventListener("input", () => growBox(input));
     input.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
       e.preventDefault();
-      if (!addTask(k, input)) input.blur();
+      if (!addTask(k, input, hi)) input.blur();
     });
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (!addTask(k, input)) input.blur();
+      if (!addTask(k, input, hi)) input.blur();
     });
     plus.addEventListener("click", () => {
-      addTask(k, input);
+      addTask(k, input, hi);
       input.focus();
     });
-
-    section.append(head, ul, form);
-    return { key: k, section, bar, fill, ul, input, count, left };
+    wrap.append(label, ul, form);
+    return { wrap, ul, input, label };
   }
 
   function rowFor(item) {
@@ -1727,8 +1753,16 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
       const head = el("div", "day-head");
       head.append(title, bar);
       const ul = el("ul", "tasks");
-      ul.append(...list.map(rowFor));
-      sec.append(head, ul);
+      const parts = [true, false].map((hi) => {
+        const these = list.filter((i) => !!i.hi === hi);
+        if (!these.length) return null;
+        const w = el("div", "lev " + (hi ? "lev-hi" : "lev-lo"));
+        const u = el("ul", "tasks");
+        u.append(...these.map(rowFor));
+        w.append(el("div", "lev-label", hi ? "High leverage" : "Low leverage"), u);
+        return w;
+      }).filter(Boolean);
+      sec.append(head, ...parts);
       return sec;
     }));
   }
@@ -1749,8 +1783,14 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
       const done = list.filter((i) => i.done).length;
       weekTotal += list.length;
       weekDone += done;
-      c.ul.replaceChildren(...list.map(rowFor));
-      c.ul.hidden = !list.length;
+      const his = list.filter((i) => i.hi);
+      const los = list.filter((i) => !i.hi);
+      c.hi.ul.replaceChildren(...his.map(rowFor));
+      c.hi.ul.hidden = !his.length;
+      c.lo.ul.replaceChildren(...los.map(rowFor));
+      c.lo.ul.hidden = !los.length;
+      const hiDone = his.filter((i) => i.done).length;
+      c.hi.label.textContent = his.length ? "High leverage · " + hiDone + " of " + his.length : "High leverage";
       c.fill.style.width = list.length ? Math.round((done / list.length) * 100) + "%" : "0%";
       c.bar.classList.toggle("full", list.length > 0 && done === list.length);
       c.bar.setAttribute("aria-valuemax", String(list.length));
@@ -2560,7 +2600,7 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => pendingPics.length > 0 || !sheet.hidden || cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
+    const typing = () => pendingPics.length > 0 || !sheet.hidden || cards.some((c) => c.inputs.some((i) => i.value)) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {

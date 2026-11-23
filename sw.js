@@ -1,5 +1,5 @@
 // Opens instantly from the saved copy, then quietly fetches any update for next time.
-const CACHE = "planner-v13";
+const CACHE = "planner-v14";
 const FILES = [
   "./",
   "index.html",
