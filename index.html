@@ -1332,6 +1332,8 @@ main {
     renderSheetPics(it);
     requestAnimationFrame(growSheetEdit);
     sheetLabel.textContent = isNote ? "Put on a day" : "Move to";
+    sheetLabel.hidden = isNote;
+    sheetDays.hidden = isNote;
     sheetCozy.hidden = !isNote;
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
     sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
