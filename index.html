@@ -496,6 +496,15 @@ main {
 .sheet-pics { display: flex; gap: 8px; flex-wrap: wrap; }
 .sheet-pics:empty { display: none; }
 .sheet-pic-add { height: 52px; }
+.checks { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.check { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 20px; font-weight: 700; line-height: 1.3; }
+.check:hover { background: var(--hover); }
+.check .box { flex: none; width: 22px; height: 22px; margin-top: 2px; border: 2px solid var(--muted); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--check-ink); }
+.check .box svg { width: 14px; height: 14px; visibility: hidden; }
+.check.on .box { background: var(--bar-full); border-color: var(--bar-full); }
+.check.on .box svg { visibility: visible; }
+.check .ct { overflow-wrap: anywhere; }
+.check.on .ct { color: var(--done-ink); text-decoration: line-through; text-decoration-thickness: 2px; }
 
 .sheet-label { margin: 4px 0 0; color: var(--muted); font-size: 16px; font-weight: 700; font-style: italic; }
 .sheet-days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -718,6 +727,7 @@ main {
     <input type="file" id="sheet-pic-input" accept="image/*" multiple hidden>
     <p class="sheet-label" id="sheet-label">Move to</p>
     <div class="sheet-days" id="sheet-days"></div>
+    <button class="pbtn sheet-cozy" id="sheet-check" type="button" hidden>Make it a checklist</button>
     <button class="pbtn sheet-cozy" id="sheet-cozy" type="button" hidden>Mark as a Cozy idea</button>
     <div class="sheet-actions">
       <button class="pbtn pbtn-danger" id="sheet-delete" type="button">Delete</button>
@@ -1298,6 +1308,7 @@ main {
   const sheetDays = document.getElementById("sheet-days");
   const sheetLabel = document.getElementById("sheet-label");
   const sheetCozy = document.getElementById("sheet-cozy");
+  const sheetCheck = document.getElementById("sheet-check");
   let sheetId = null;
   let sheetArmed = false;
   let sheetReturn = null;
@@ -1335,6 +1346,8 @@ main {
     sheetLabel.hidden = isNote;
     sheetDays.hidden = isNote;
     sheetCozy.hidden = !isNote;
+    sheetCheck.hidden = !isNote;
+    if (isNote) sheetCheck.textContent = it.check ? "Make it a normal note" : "Make it a checklist";
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
     sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
       const b = el("button", "dbtn");
@@ -1442,6 +1455,17 @@ main {
   document.getElementById("sheet-cancel").addEventListener("click", sheetTap(closeSheet));
   document.getElementById("sheet-delete").addEventListener("click", sheetTap(() => (sheetKind === "note" ? removeNote(sheetId) : remove(sheetId))));
   sheetCozy.addEventListener("click", sheetTap(() => toggleCozy(sheetId)));
+  sheetCheck.addEventListener("click", sheetTap(() => {
+    const id = sheetId;
+    const n = notes.find((x) => x.id === id);
+    if (!n) return;
+    closeSheet();
+    const was = !!n.check;
+    setTimeout(() => {
+      changeNote(id, { check: !was });
+      showToast(was ? "Back to a normal note" : "Now a checklist", { label: "Undo", onClick: () => changeNote(id, { check: was }) });
+    }, 0);
+  }));
 
   // ---------- rendering ----------
 
@@ -1706,6 +1730,41 @@ main {
     return fmt(k, sameYear ? { weekday: "long", month: "short", day: "numeric" } : { month: "short", day: "numeric", year: "numeric" });
   }
 
+  // a checklist note: one box per line (or per comma, if it's all one line)
+  function checkLines(text) {
+    let lines = text.split(/\n+/).map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)]|\[ ?x?\])\s*/i, "").trim()).filter(Boolean);
+    if (lines.length === 1 && lines[0].includes(",")) lines = lines[0].split(",").map((l) => l.trim()).filter(Boolean);
+    return lines;
+  }
+  function checksFor(n) {
+    const lines = checkLines(n.text || "");
+    const ticks = new Set(Array.isArray(n.ticks) ? n.ticks : []);
+    const ul = el("ul", "checks");
+    lines.forEach((line, i) => {
+      const li = el("li", "check" + (ticks.has(line) ? " on" : ""));
+      li.setAttribute("role", "checkbox");
+      li.setAttribute("aria-checked", String(ticks.has(line)));
+      li.tabIndex = 0;
+      const box = el("span", "box");
+      box.innerHTML = CHECK_SVG;
+      li.append(box, el("span", "ct", line));
+      const flip = (e) => {
+        e.stopPropagation();
+        const cur = notes.find((x) => x.id === n.id);
+        if (!cur) return;
+        const t = new Set(Array.isArray(cur.ticks) ? cur.ticks : []);
+        t.has(line) ? t.delete(line) : t.add(line);
+        changeNote(n.id, { ticks: [...t] });
+      };
+      for (const ev of ["pointerdown", "pointerup"]) li.addEventListener(ev, (e) => e.stopPropagation());
+      li.addEventListener("click", flip);
+      li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(e); } });
+      ul.append(li);
+    });
+    const done = lines.filter((l) => ticks.has(l)).length;
+    return { ul, label: done + " of " + lines.length + " done" };
+  }
+
   function noteRow(n) {
     const li = document.createElement("li");
     const row = el("div", "row note" + (n.done ? " done" : "") + (n.id === popId ? " pop" : ""));
@@ -1715,7 +1774,10 @@ main {
     row.dataset.id = n.id;
     const time = el("span", "note-time", clock(n.at));
     const body = el("span", "body");
-    if (n.text) body.append(el("span", "text", n.text));
+    if (n.check && n.text) {
+      const c = checksFor(n);
+      body.append(c.ul, el("span", "tag", c.label));
+    } else if (n.text) body.append(el("span", "text", n.text));
     if (Array.isArray(n.imgs) && n.imgs.length) body.append(picsFor(n.imgs));
     if (isCozy(n)) body.append(el("span", "tag cozy", "Cozy idea"));
     row.append(time, body);
