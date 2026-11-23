@@ -687,6 +687,10 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
 .lev-hi .lev-label { color: #185fa5; }
 .lev-lo .lev-label { color: #8e8e93; }
 .lev-lo { border-top: 1px dashed var(--edge); padding-top: 8px; }
+.pencil { margin-right: -4px; }
+.pencil:hover { color: var(--accent) !important; }
+.inline-edit { width: 100%; resize: none; border: 1.5px solid var(--accent); border-radius: 10px; padding: 6px 8px; font: inherit; font-size: 18px; font-weight: 600; color: var(--ink); background: var(--paper); line-height: 1.3; }
+.inline-edit:focus { outline: 0; }
 </style>
 </head>
 <body>
@@ -1652,8 +1656,61 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     if (item.from && item.from < item.day) body.append(el("span", "tag", fromLabel(item)));
     row.append(mark, body);
     attachPress(row, item.id, () => toggle(item.id), (byPress) => openSheet(item.id, byPress));
-    li.append(row, trashFor("Delete " + item.text, () => remove(item.id)));
+    li.append(row, pencilFor(row, item.text, (t) => editText("task", item.id, t)), trashFor("Delete " + item.text, () => remove(item.id)));
     return li;
+  }
+
+  // the pencil: fix the words right where they are (Enter or clicking away saves, Esc cancels)
+  const PENCIL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  let editingNow = false;
+  function editText(kind, id, text) {
+    const list = kind === "note" ? notes : items;
+    const it = list.find((x) => x.id === id);
+    if (!it) return;
+    const before = it.text;
+    const t = text.trim().slice(0, kind === "note" ? 5000 : 1000);
+    if (t === before || (!t && !(it.imgs && it.imgs.length))) { kind === "note" ? renderNotes() : render(); return; }
+    const apply = (v) => (kind === "note" ? changeNote(id, { text: v }) : change(id, { text: v }));
+    apply(t);
+    showToast("Saved", { label: "Undo", onClick: () => apply(before) });
+  }
+  function pencilFor(row, text, onSave) {
+    const b = el("button", "trash pencil");
+    b.type = "button";
+    b.innerHTML = PENCIL_SVG;
+    b.setAttribute("aria-label", "Edit");
+    b.title = "Edit";
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (row.querySelector(".inline-edit")) return;
+      const body = row.querySelector(".body");
+      const old = body.querySelector(".text");
+      const box = el("textarea", "inline-edit");
+      box.value = text;
+      box.rows = 1;
+      for (const ev of ["pointerdown", "pointerup", "click", "keydown", "contextmenu"]) box.addEventListener(ev, (x) => x.stopPropagation());
+      if (old) old.replaceWith(box); else body.prepend(box);
+      editingNow = true;
+      const grow = () => { box.style.height = "auto"; box.style.height = box.scrollHeight + 2 + "px"; };
+      grow();
+      box.addEventListener("input", grow);
+      let done = false;
+      const finish = (save) => {
+        if (done) return;
+        done = true;
+        editingNow = false;
+        if (save) onSave(box.value);
+        else { if (old) box.replaceWith(old); else box.remove(); }
+      };
+      box.addEventListener("keydown", (x) => {
+        if (x.key === "Enter" && !x.shiftKey && !x.isComposing) { x.preventDefault(); finish(true); }
+        if (x.key === "Escape") { x.preventDefault(); finish(false); }
+      });
+      box.addEventListener("blur", () => finish(true));
+      box.focus();
+      box.setSelectionRange(box.value.length, box.value.length);
+    });
+    return b;
   }
 
   // the trash can at the end of every task and note
@@ -1889,7 +1946,7 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     if (isCozy(n)) body.append(el("span", "tag cozy", "Cozy idea"));
     row.append(time, mark, body);
     attachPress(row, n.id, () => toggleNote(n.id), (byPress) => openSheet(n.id, byPress, "note"));
-    li.append(row, trashFor("Delete note: " + n.text, () => removeNote(n.id)));
+    li.append(row, pencilFor(row, n.text, (t) => editText("note", n.id, t)), trashFor("Delete note: " + n.text, () => removeNote(n.id)));
     return li;
   }
 
@@ -2600,7 +2657,7 @@ html, body { font-family: var(--serif); -webkit-font-smoothing: antialiased; }
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => pendingPics.length > 0 || !sheet.hidden || cards.some((c) => c.inputs.some((i) => i.value)) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
+    const typing = () => editingNow || pendingPics.length > 0 || !sheet.hidden || cards.some((c) => c.inputs.some((i) => i.value)) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
