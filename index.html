@@ -325,6 +325,7 @@ main {
 .leftover .pbtn { height: 40px; padding: 0 14px; }
 .leftover .x { border: 0; background: transparent; font-size: 22px; padding: 0 6px; cursor: pointer; color: var(--tag-ink); }
 .past-wrap { padding: 22px 16px 0; text-align: center; }
+.past-title { margin: 10px 0 0; font-size: 24px; font-weight: 800; text-align: left; padding: 0 4px; }
 .past-btn { border: 1.5px solid var(--edge); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 10px 22px; font-size: 17px; font-weight: 800; cursor: pointer; }
 #past { padding-top: 16px; }
 #past .day { opacity: 0.92; }
@@ -707,8 +708,9 @@ main {
     </div>
   </div>
   <main class="inner page" id="week"></main>
-  <div class="inner page past-wrap"><button class="past-btn" id="past-btn" type="button" aria-expanded="false">Past days</button></div>
-  <main class="inner page" id="past" hidden></main>
+  <div class="inner page past-wrap"><h2 class="past-title">Past 7 days</h2></div>
+  <main class="inner page" id="past"></main>
+  <div class="inner page past-wrap"><button class="past-btn" id="past-btn" type="button" aria-expanded="false">Show older days</button></div>
   <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it to another day. Old days are under Past days.</p>
 </section>
 
@@ -975,7 +977,7 @@ main {
     const d = new Date();
     d.setHours(12, 0, 0, 0);
     const keys = [];
-    for (let n = 0; n < 7; n++) {
+    for (let n = 0; n < 8; n++) {
       keys.push(keyOf(d));
       d.setDate(d.getDate() + 1);
     }
@@ -999,7 +1001,23 @@ main {
     return list;
   }
 
+  // Before Nov 22 unfinished tasks were moved onto today automatically. Put them back once.
+  function unroll() {
+    const FLAG = "planner-unrolled-v1";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); } catch (e) { return; }
+    const today = todayKey();
+    const now = Date.now();
+    let n = 0;
+    items = items.map((i) => {
+      if (i.deleted || !i.from || i.from >= i.day || i.day !== today) return i;
+      n++;
+      return Object.assign({}, i, { day: i.from, from: null, updated: now });
+    });
+    if (n) save();
+  }
+
   function refresh() {
+    unroll();
     const next = rolled(items);
     if (sig(next) !== sig(items)) {
       items = next;
@@ -1346,7 +1364,7 @@ main {
     sheetLabel.hidden = isNote;
     sheetDays.hidden = isNote;
     sheetCozy.hidden = !isNote;
-    sheetCheck.hidden = !isNote;
+    sheetCheck.hidden = true;
     if (isNote) sheetCheck.textContent = it.check ? "Make it a normal note" : "Make it a checklist";
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
     sheetDays.replaceChildren(...weekKeys().map((k, idx) => {
@@ -1626,25 +1644,28 @@ main {
   // Past days: every earlier day that has tasks, newest first
   const pastEl = document.getElementById("past");
   const pastBtn = document.getElementById("past-btn");
+  let showOlder = false;
   pastBtn.addEventListener("click", () => {
-    pastEl.hidden = !pastEl.hidden;
-    pastBtn.setAttribute("aria-expanded", String(!pastEl.hidden));
-    pastBtn.textContent = pastEl.hidden ? "Past days" : "Hide past days";
+    showOlder = !showOlder;
+    pastBtn.setAttribute("aria-expanded", String(showOlder));
+    pastBtn.textContent = showOlder ? "Hide older days" : "Show older days";
     renderPast();
-    if (!pastEl.hidden) pastEl.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   function renderPast() {
-    if (pastEl.hidden) return;
     const today = todayKey();
+    const d0 = new Date();
+    d0.setHours(12, 0, 0, 0);
+    d0.setDate(d0.getDate() - 7);
+    const cutoff = keyOf(d0);
     const byDay = new Map();
     for (const it of items) {
-      if (it.deleted || it.day >= today) continue;
+      if (it.deleted || it.day >= today || (!showOlder && it.day < cutoff)) continue;
       if (!byDay.has(it.day)) byDay.set(it.day, []);
       byDay.get(it.day).push(it);
     }
     const days = [...byDay.keys()].sort().reverse();
     if (!days.length) {
-      pastEl.replaceChildren(el("p", "past-empty", "No past days yet."));
+      pastEl.replaceChildren(el("p", "past-empty", "Nothing from the past 7 days."));
       return;
     }
     pastEl.replaceChildren(...days.map((k) => {
@@ -1773,14 +1794,16 @@ main {
     row.setAttribute("aria-pressed", String(!!n.done));
     row.dataset.id = n.id;
     const time = el("span", "note-time", clock(n.at));
+    const mark = el("span", "mark");
+    mark.innerHTML = CHECK_SVG;
     const body = el("span", "body");
-    if (n.check && n.text) {
+    if (false) {
       const c = checksFor(n);
       body.append(c.ul, el("span", "tag", c.label));
     } else if (n.text) body.append(el("span", "text", n.text));
     if (Array.isArray(n.imgs) && n.imgs.length) body.append(picsFor(n.imgs));
     if (isCozy(n)) body.append(el("span", "tag cozy", "Cozy idea"));
-    row.append(time, body);
+    row.append(time, mark, body);
     attachPress(row, n.id, () => toggleNote(n.id), (byPress) => openSheet(n.id, byPress, "note"));
     li.append(row, trashFor("Delete note: " + n.text, () => removeNote(n.id)));
     return li;
