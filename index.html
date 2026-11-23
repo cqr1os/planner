@@ -309,6 +309,36 @@ main {
 .bar { height: 5px; margin: 10px 0 2px; border-radius: 3px; background: var(--bar-bg); overflow: hidden; }
 .bar-fill { width: 0; height: 100%; border-radius: 3px; background: var(--bar); transition: width 0.35s ease; }
 .bar.full .bar-fill { background: var(--bar-full); }
+/* week polish */
+.day { transition: box-shadow 0.2s ease; }
+.day.empty:not(.today) { background: transparent; box-shadow: inset 0 0 0 1.5px var(--edge); }
+.day.empty:not(.today) .day-name { color: var(--muted); }
+.day-check { display: none; margin-left: 8px; color: var(--bar-full); font-size: 0.8em; }
+.day.alldone .day-check { display: inline; }
+.day-title { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
+.day-count { display: none; margin-top: 6px; font-size: 19px; font-weight: 800; color: var(--accent); }
+.day.today .day-count { display: block; }
+.day.today .day-count b { font-size: 30px; }
+.day.today .bar { height: 9px; border-radius: 5px; }
+.leftover { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--tag-bg); color: var(--tag-ink); font-weight: 700; }
+.leftover span { flex: 1; }
+.leftover .pbtn { height: 40px; padding: 0 14px; }
+.leftover .x { border: 0; background: transparent; font-size: 22px; padding: 0 6px; cursor: pointer; color: var(--tag-ink); }
+.past-wrap { padding: 22px 16px 0; text-align: center; }
+.past-btn { border: 1.5px solid var(--edge); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 10px 22px; font-size: 17px; font-weight: 800; cursor: pointer; }
+#past { padding-top: 16px; }
+#past .day { opacity: 0.92; }
+.past-empty { color: var(--muted); font-style: italic; text-align: center; }
+/* pictures */
+.say-pics { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.say-pic { position: relative; }
+.say-pic img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; }
+.say-pic button { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--ink); color: var(--paper); font-size: 15px; line-height: 24px; padding: 0; cursor: pointer; }
+.pics { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pics img { max-width: 220px; max-height: 220px; border-radius: 12px; display: block; cursor: zoom-in; background: var(--bar-bg); min-width: 60px; min-height: 60px; object-fit: cover; }
+.lightbox { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; }
+.say.drop { border-color: var(--accent); }
 
 /* each task sits on its own ruled line */
 .tasks { list-style: none; margin: 0; padding: 0; }
@@ -567,6 +597,7 @@ main {
   main { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
   .day { min-height: 190px; }
   .day.today { grid-column: 1 / -1; min-height: 0; padding: 16px 22px 6px; }
+  .day.empty:not(.today) { min-height: 120px; }
 }
 @keyframes sheet-pop { from { transform: scale(0.97); opacity: 0; } }
 
@@ -635,8 +666,11 @@ main {
       </section>
       <form class="say" id="say-form" autocomplete="off">
         <textarea id="say" rows="2" maxlength="5000" placeholder="What's on your mind?" aria-label="What's on your mind?" autocapitalize="sentences"></textarea>
+        <div class="say-pics" id="say-pics" hidden></div>
         <div class="say-bar">
           <span class="say-status" id="say-status" role="status" aria-live="polite"></span>
+          <button class="mic photo" id="photo-btn" type="button" aria-label="Add a picture" title="Add a picture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+          <input type="file" id="photo-input" accept="image/*" multiple hidden>
           <button class="mic" id="mic" type="button" aria-label="Talk instead of typing" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
           <button class="pbtn pbtn-main say-save" id="say-save" type="submit" hidden>Save</button>
         </div>
@@ -655,7 +689,9 @@ main {
     </div>
   </div>
   <main class="inner page" id="week"></main>
-  <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it to another day.</p>
+  <div class="inner page past-wrap"><button class="past-btn" id="past-btn" type="button" aria-expanded="false">Past days</button></div>
+  <main class="inner page" id="past" hidden></main>
+  <p class="inner page hint" id="hint">Tap a task to cross it off. Hold it to move it to another day. Old days are under Past days.</p>
 </section>
 
 <div class="inner page foot">
@@ -934,12 +970,9 @@ main {
   }
 
   // Anything not crossed off from a day that's passed moves to today and remembers where it came from.
+  // Each new day starts fresh: unfinished tasks stay on their own day (see Past days).
   function rolled(list) {
-    const today = todayKey();
-    const now = Date.now();
-    return list.map((i) =>
-      i.deleted || i.done || i.day >= today ? i : Object.assign({}, i, { day: today, from: i.from || i.day, updated: now })
-    );
+    return list;
   }
 
   function refresh() {
@@ -1002,14 +1035,146 @@ main {
     showToast("Deleted", { label: "Undo", onClick: () => change(id, { deleted: false }) });
   }
 
+  // ---------- pictures ----------
+  // A picture is shrunk on this device, kept in IndexedDB ("img:<id>"), and uploaded to
+  // images/<id>.jpg in the same private repo so the other device can fetch it.
+  const PIC_PENDING = "planner-pics-pending";
+  let pendingPics = [];
+  const picCache = new Map();
+
+  function pendingList() {
+    try { return JSON.parse(localStorage.getItem(PIC_PENDING) || "[]"); } catch (e) { return []; }
+  }
+  function setPending(list) {
+    try { localStorage.setItem(PIC_PENDING, JSON.stringify(list)); } catch (e) {}
+  }
+  function storePic(id, data, upload) {
+    picCache.set(id, data);
+    idbRun("readwrite", (s) => s.put(data, "img:" + id));
+    if (upload) setPending(pendingList().filter((x) => x !== id).concat(id));
+  }
+  async function loadPic(id) {
+    if (picCache.has(id)) return picCache.get(id);
+    let data = await idbRun("readonly", (s) => s.get("img:" + id));
+    if (!data && backup.key) {
+      try {
+        const res = await fetch(REPO + "/contents/images/" + id + ".jpg", { cache: "no-store", headers: ghHeaders(backup.key) });
+        if (res.ok) {
+          const j = await res.json();
+          if (j.content) data = "data:image/jpeg;base64," + j.content.replace(/\s/g, "");
+          else if (j.download_url) {
+            const b = await (await fetch(j.download_url)).blob();
+            data = await new Promise((r) => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+          }
+          if (data) storePic(id, data, false);
+        }
+      } catch (e) {}
+    }
+    if (data) picCache.set(id, data);
+    return data || null;
+  }
+  async function uploadPics(key) {
+    for (const id of pendingList()) {
+      const data = await loadPic(id);
+      if (!data) { setPending(pendingList().filter((x) => x !== id)); continue; }
+      const res = await fetch(REPO + "/contents/images/" + id + ".jpg", {
+        method: "PUT",
+        cache: "no-store",
+        headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders(key)),
+        body: JSON.stringify({ message: "Add picture", content: data.split(",")[1] })
+      });
+      if (res.ok || res.status === 422) setPending(pendingList().filter((x) => x !== id));
+      else throw backupError(res.status);
+    }
+  }
+  function shrink(file) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const max = 1600;
+        const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * sc);
+        c.height = Math.round(img.naturalHeight * sc);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  async function addPicFiles(files) {
+    const list = [...files].filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return;
+    for (const f of list) {
+      const data = await shrink(f);
+      if (data) pendingPics.push({ id: newId(), data });
+    }
+    renderSayPics();
+    sayChanged();
+  }
+  function renderSayPics() {
+    const box = document.getElementById("say-pics");
+    box.hidden = !pendingPics.length;
+    box.replaceChildren(...pendingPics.map((p) => {
+      const d = el("div", "say-pic");
+      const im = el("img");
+      im.src = p.data;
+      im.alt = "Picture to add";
+      const x = el("button", null, "×");
+      x.type = "button";
+      x.setAttribute("aria-label", "Remove picture");
+      x.addEventListener("click", () => {
+        pendingPics = pendingPics.filter((q) => q !== p);
+        renderSayPics();
+        sayChanged();
+      });
+      d.append(im, x);
+      return d;
+    }));
+  }
+  function openLightbox(src) {
+    const lb = el("div", "lightbox");
+    const im = el("img");
+    im.src = src;
+    im.alt = "Picture";
+    lb.append(im);
+    const close = () => { lb.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    lb.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.append(lb);
+  }
+  function picsFor(ids) {
+    const wrap = el("span", "pics");
+    for (const id of ids) {
+      const im = el("img");
+      im.alt = "Picture";
+      for (const ev of ["pointerdown", "pointerup", "click"]) im.addEventListener(ev, (e) => e.stopPropagation());
+      im.addEventListener("click", () => { if (im.src) openLightbox(im.src); });
+      loadPic(id).then((d) => { if (d) im.src = d; });
+      wrap.append(im);
+    }
+    return wrap;
+  }
+
   // notes
 
   function addNote() {
     stopTalking();
     const text = sayEl.value.trim().slice(0, 5000);
-    if (!text) return false;
+    if (!text && !pendingPics.length) return false;
     const now = Date.now();
-    notes = notes.concat({ id: newId(), text, at: now, updated: now, done: false });
+    const note = { id: newId(), text, at: now, updated: now, done: false };
+    if (pendingPics.length) {
+      note.imgs = pendingPics.map((p) => p.id);
+      for (const p of pendingPics) storePic(p.id, p.data, true);
+      pendingPics = [];
+      renderSayPics();
+    }
+    notes = notes.concat(note);
     saveNotes();
     sayEl.value = "";
     sayChanged();
@@ -1147,7 +1312,7 @@ main {
     sheetReturn = byPress ? null : document.activeElement;
     sheetArmed = !byPress;
     if (byPress) armOnLift();
-    sheetTask.textContent = it.text;
+    sheetTask.textContent = it.text || "Picture";
     sheetLabel.textContent = isNote ? "Put on a day" : "Move to";
     sheetCozy.hidden = !isNote;
     if (isNote) sheetCozy.textContent = isCozy(it) ? "Not a Cozy idea" : "Mark as a Cozy idea";
@@ -1210,14 +1375,20 @@ main {
     const section = el("section", "day" + (idx === 0 ? " today" : ""));
     const head = el("div", "day-head");
     const title = el("h2", "day-title");
-    title.append(el("span", "day-name", dayName(k, idx)), el("span", "day-date", dayDate(k, idx)));
+    const nm = el("span", "day-name", dayName(k, idx));
+    nm.append(el("span", "day-check", "✓"));
+    title.append(nm, el("span", "day-date", dayDate(k, idx)));
+    const count = el("div", "day-count");
+    const left = idx === 0 ? el("div", "leftover") : null;
+    if (left) left.hidden = true;
     // fills up as tasks get crossed off
     const bar = el("div", "bar");
     bar.setAttribute("role", "progressbar");
     bar.setAttribute("aria-valuemin", "0");
     const fill = el("div", "bar-fill");
     bar.append(fill);
-    head.append(title, bar);
+    head.append(title, count, bar);
+    if (left) head.append(left);
 
     const ul = el("ul", "tasks");
 
@@ -1253,7 +1424,7 @@ main {
     });
 
     section.append(head, ul, form);
-    return { key: k, section, bar, fill, ul, input };
+    return { key: k, section, bar, fill, ul, input, count, left };
   }
 
   function rowFor(item) {
@@ -1288,6 +1459,92 @@ main {
     return b;
   }
 
+  // "3 left from yesterday" on Today
+  const LEFT_HIDE = "planner-leftovers-hidden";
+  function yesterdayKey() {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - 1);
+    return keyOf(d);
+  }
+  function renderLeftovers(box) {
+    const y = yesterdayKey();
+    let hidden = "";
+    try { hidden = localStorage.getItem(LEFT_HIDE) || ""; } catch (e) {}
+    const left = items.filter((i) => !i.deleted && !i.done && i.day === y);
+    if (!left.length || hidden === todayKey()) { box.hidden = true; return; }
+    box.hidden = false;
+    const txt = el("span", null, left.length + " left from yesterday");
+    const add = el("button", "pbtn pbtn-main", "Add to today");
+    add.type = "button";
+    add.addEventListener("click", () => {
+      const ids = left.map((i) => i.id);
+      const now = Date.now();
+      items = items.map((i) => (ids.includes(i.id) ? Object.assign({}, i, { day: todayKey(), from: y, updated: now }) : i));
+      save();
+      render();
+      showToast("Added " + ids.length + " to today", { label: "Undo", onClick: () => {
+        const t = Date.now();
+        items = items.map((i) => (ids.includes(i.id) ? Object.assign({}, i, { day: y, from: null, updated: t }) : i));
+        save();
+        render();
+      } });
+    });
+    const x = el("button", "x", "×");
+    x.type = "button";
+    x.setAttribute("aria-label", "Hide for today");
+    x.addEventListener("click", () => {
+      try { localStorage.setItem(LEFT_HIDE, todayKey()); } catch (e) {}
+      box.hidden = true;
+    });
+    box.replaceChildren(txt, add, x);
+  }
+
+  // Past days: every earlier day that has tasks, newest first
+  const pastEl = document.getElementById("past");
+  const pastBtn = document.getElementById("past-btn");
+  pastBtn.addEventListener("click", () => {
+    pastEl.hidden = !pastEl.hidden;
+    pastBtn.setAttribute("aria-expanded", String(!pastEl.hidden));
+    pastBtn.textContent = pastEl.hidden ? "Past days" : "Hide past days";
+    renderPast();
+    if (!pastEl.hidden) pastEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  function renderPast() {
+    if (pastEl.hidden) return;
+    const today = todayKey();
+    const byDay = new Map();
+    for (const it of items) {
+      if (it.deleted || it.day >= today) continue;
+      if (!byDay.has(it.day)) byDay.set(it.day, []);
+      byDay.get(it.day).push(it);
+    }
+    const days = [...byDay.keys()].sort().reverse();
+    if (!days.length) {
+      pastEl.replaceChildren(el("p", "past-empty", "No past days yet."));
+      return;
+    }
+    pastEl.replaceChildren(...days.map((k) => {
+      const list = byDay.get(k).sort((a, b) => a.at - b.at);
+      const done = list.filter((i) => i.done).length;
+      const sec = el("section", "day" + (done === list.length ? " alldone" : ""));
+      const title = el("h2", "day-title");
+      const nm = el("span", "day-name", noteDayLabel(k));
+      nm.append(el("span", "day-check", "✓"));
+      title.append(nm, el("span", "day-date", done + " of " + list.length + " done"));
+      const bar = el("div", "bar" + (done === list.length ? " full" : ""));
+      const fill = el("div", "bar-fill");
+      fill.style.width = Math.round((done / list.length) * 100) + "%";
+      bar.append(fill);
+      const head = el("div", "day-head");
+      head.append(title, bar);
+      const ul = el("ul", "tasks");
+      ul.append(...list.map(rowFor));
+      sec.append(head, ul);
+      return sec;
+    }));
+  }
+
   function render() {
     buildWeek();
     const focusedId = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.id : null;
@@ -1311,7 +1568,12 @@ main {
       c.bar.setAttribute("aria-valuemax", String(list.length));
       c.bar.setAttribute("aria-valuenow", String(done));
       c.bar.setAttribute("aria-label", !list.length ? "Nothing planned" : done === list.length ? "All done" : done + " of " + list.length + " done");
+      c.section.classList.toggle("empty", !list.length);
+      c.section.classList.toggle("alldone", list.length > 0 && done === list.length);
+      c.count.innerHTML = "<b>" + done + "</b> of " + list.length + " done";
+      if (c.left) renderLeftovers(c.left);
     }
+    renderPast();
     popId = null;
     weekCountEl.textContent = !weekTotal
       ? "Nothing planned yet this week"
@@ -1354,7 +1616,8 @@ main {
     row.dataset.id = n.id;
     const time = el("span", "note-time", clock(n.at));
     const body = el("span", "body");
-    body.append(el("span", "text", n.text));
+    if (n.text) body.append(el("span", "text", n.text));
+    if (Array.isArray(n.imgs) && n.imgs.length) body.append(picsFor(n.imgs));
     if (isCozy(n)) body.append(el("span", "tag cozy", "Cozy idea"));
     row.append(time, body);
     attachPress(row, n.id, () => toggleNote(n.id), (byPress) => openSheet(n.id, byPress, "note"));
@@ -1418,11 +1681,25 @@ main {
 
   function sayChanged() {
     growSay();
-    saySave.hidden = !sayEl.value.trim();
+    saySave.hidden = !sayEl.value.trim() && !pendingPics.length;
     saveDraft();
   }
 
   sayEl.addEventListener("input", sayChanged);
+  const photoInput = document.getElementById("photo-input");
+  document.getElementById("photo-btn").addEventListener("click", () => photoInput.click());
+  photoInput.addEventListener("change", () => { addPicFiles(photoInput.files); photoInput.value = ""; });
+  sayEl.addEventListener("paste", (e) => {
+    const files = e.clipboardData ? [...e.clipboardData.files] : [];
+    if (files.some((f) => f.type.startsWith("image/"))) { e.preventDefault(); addPicFiles(files); }
+  });
+  sayForm.addEventListener("dragover", (e) => { e.preventDefault(); sayForm.classList.add("drop"); });
+  sayForm.addEventListener("dragleave", () => sayForm.classList.remove("drop"));
+  sayForm.addEventListener("drop", (e) => {
+    e.preventDefault();
+    sayForm.classList.remove("drop");
+    if (e.dataTransfer) addPicFiles(e.dataTransfer.files);
+  });
   // return saves the note (shift+return makes a new line on a Mac); return on an empty box puts the keyboard away
   sayEl.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
@@ -1720,12 +1997,23 @@ main {
     throw { kind: "error" };
   }
 
+  // a note from the other device whose picture hasn't loaded yet gets drawn again after a sync
+  let picsShown = 0;
+  function notesNeedPics() {
+    const n = notes.filter((x) => !x.deleted && x.imgs && x.imgs.some((id) => !picCache.has(id))).length;
+    const again = n !== picsShown;
+    picsShown = n;
+    return again;
+  }
+
   // quiet = the regular background check, which doesn't flash "Syncing…" every time
   async function runSync(quiet) {
     const key = backup.key;
     if (!quiet || backup.state !== "ok") setBackup({ state: "syncing" });
     try {
       for (const file of SYNC_FILES) await syncFile(key, file);
+      await uploadPics(key);
+      if (notesNeedPics()) renderNotes();
       setBackup({ state: "ok", at: Date.now() });
     } catch (e) {
       if (key !== backup.key) return;
@@ -1986,7 +2274,7 @@ main {
     document.getElementById("notes-hint").textContent = "Click a note to cross it out. Right-click it to put it on a day or mark it as a Cozy idea. Cozy ideas go on your ideas board every night.";
   }
 
-  // at midnight the week shifts by a day and leftovers roll onto the new today
+  // at midnight the week shifts by a day and today starts fresh
   let midnightTimer = null;
   function scheduleMidnight() {
     clearTimeout(midnightTimer);
@@ -2044,7 +2332,7 @@ main {
 
   if ("serviceWorker" in navigator) {
     // when a new version arrives, switch to it right away unless you're mid-typing
-    const typing = () => cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
+    const typing = () => pendingPics.length > 0 || cards.some((c) => c.input.value) || !!keyInput.value || !!connectInput.value || !!sayEl.value || !!rec;
     const hadController = !!navigator.serviceWorker.controller;
     let reloadWhenHidden = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
